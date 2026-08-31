@@ -8,6 +8,7 @@
 - Выдача: отдельный worker и две HTTP-заглушки поставщиков.
 - Production URL: [test-shop.komaroff-dev.ru](https://test-shop.komaroff-dev.ru)
 - API docs: [test-shop.komaroff-dev.ru/api/docs](https://test-shop.komaroff-dev.ru/api/docs)
+- CI: format, lint, strict typecheck, unit/integration/race/E2E, OpenAPI и runtime Docker smoke-test.
 
 ## Быстрый запуск
 
@@ -56,6 +57,8 @@ pnpm test:race
 pnpm test:e2e
 ```
 
+Эта же матрица прошла в GitHub Actions. После production deploy дополнительно выполнен Playwright smoke-test прямо на публичном HTTPS-домене: пять обязательных интерактивов, двойной клик «Купить», оплата, выдача кода и отсутствие горизонтального overflow на ширине 390 px.
+
 ## Почему код выдаётся ровно один раз
 
 `event_id`, `orders.idempotency_key`, `delivery_jobs.order_id`, `fulfillments.order_id` и `fulfillments.code` защищены UNIQUE-ограничениями. Worker атомарно захватывает одно задание через `FOR UPDATE SKIP LOCKED`, а поставщик атомарно закрепляет свободный ключ за стабильным `request_id`. При timeout worker повторяет **тот же запрос тому же поставщику**: если код уже был зарезервирован, поставщик возвращает его повторно. Внешний HTTP никогда не выполняется внутри транзакции.
@@ -68,6 +71,10 @@ pnpm test:e2e
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — схемы контейнеров, последовательностей и состояний.
 - [docs/API.md](docs/API.md), [docs/TESTING.md](docs/TESTING.md), [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md), [docs/SECURITY.md](docs/SECURITY.md).
 - [docs/TIMELOG.md](docs/TIMELOG.md) — фактический замер времени.
+
+## Production
+
+Приложение работает с одного origin за Nginx и Let's Encrypt. На VDS запущены `app`, `worker`, `provider-a`, `provider-b` и PostgreSQL; наружу опубликован только `app` на loopback-интерфейсе. Релизный workflow разворачивает immutable GHCR-образ по git SHA, выполняет миграции и health-check. Production-секреты хранятся только на сервере и в GitHub Actions secrets.
 
 ## Осознанные границы
 

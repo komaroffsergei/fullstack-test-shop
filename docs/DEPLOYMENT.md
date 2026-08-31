@@ -30,4 +30,13 @@ server {
 
 Production secrets находятся только в `/opt/fullstack-test-shop/.env.production` и GitHub Actions secrets. Никаких panel/SSH/admin credentials в Git и workflow нет.
 
+## Фактическая production-проверка
+
+- DNS A-запись разрешается в `62.113.112.185`.
+- Nginx публикует только `https://test-shop.komaroff-dev.ru`; upstream слушает `127.0.0.1:4400`.
+- Сертификат Let's Encrypt установлен с автоматическим renew.
+- После deployment проверяются `/api/health/ready`, главная, Angular SPA fallback, каталог, OpenAPI и metrics.
+- Admin API возвращает `401` без `X-Admin-Token` и `200` с серверным токеном.
+- Внешний Playwright smoke-test проходит полный путь покупки до статуса `delivered`.
+
 Официальные инструкции провайдера: [поддомен](https://vdsina.ru/qa/q/kak-sdelat-poddomen), [SSL](https://vdsina.ru/qa/q/ssl-sertifikaty-kak-vypustit).

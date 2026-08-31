@@ -8,5 +8,8 @@
 | 2026-08-31 14:10 — 19:40            | schema/domain, API/inbox, worker, providers      |
 | 2026-08-31 19:40 — 22:10            | Angular UI, assets, strict build                 |
 | 2026-08-31 22:10 — 2026-09-01 00:10 | race/E2E/CI, Docker и документация               |
+| 2026-09-01 00:10 — 01:57            | DNS, VDS, TLS, immutable deploy и production QA  |
 
-Промежуточный итог: **12 ч 24 мин elapsed**. Финальное время обновляется перед release после production smoke-test.
+Итог: **14 ч 11 мин elapsed**. Время включает ожидание установки зависимостей, сборок GitHub Actions, загрузки Docker-слоёв и выпуска TLS-сертификата.
+
+Production smoke-test завершён 2026-09-01 в 01:57 (Europe/Moscow): проверены health endpoints, SPA fallback, OpenAPI, metrics, пять контейнеров, защита admin API, полный браузерный путь покупки и viewport 390 px.
