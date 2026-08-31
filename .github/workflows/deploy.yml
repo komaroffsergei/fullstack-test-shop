@@ -1,0 +1,44 @@
+name: Deploy production
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/komaroffsergei/fullstack-test-shop:${{ github.sha }}
+      - name: Deploy immutable image and health-check
+        uses: appleboy/ssh-action@v1.2.2
+        env:
+          IMAGE: ghcr.io/komaroffsergei/fullstack-test-shop:${{ github.sha }}
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: shopdeploy
+          key: ${{ secrets.PROD_SSH_KEY }}
+          envs: IMAGE
+          script_stop: true
+          script: |
+            cd /opt/fullstack-test-shop
+            previous=$(docker compose -f compose.production.yaml images -q app || true)
+            export IMAGE
+            docker compose -f compose.production.yaml pull
+            docker compose -f compose.production.yaml run --rm app ./node_modules/.bin/prisma migrate deploy --schema packages/database/prisma/schema.prisma
+            docker compose -f compose.production.yaml up -d
+            for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4400/api/health/ready && exit 0; sleep 2; done
+            if [ -n "$previous" ]; then docker tag "$previous" ghcr.io/komaroffsergei/fullstack-test-shop:rollback; IMAGE=ghcr.io/komaroffsergei/fullstack-test-shop:rollback docker compose -f compose.production.yaml up -d; fi
+            exit 1

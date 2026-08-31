@@ -1,0 +1,50 @@
+x-app: &app
+  image: ${IMAGE:-ghcr.io/komaroffsergei/fullstack-test-shop:latest}
+  restart: unless-stopped
+  env_file: .env.production
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: shop
+      POSTGRES_USER: shop
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U shop -d shop']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  app:
+    <<: *app
+    command: ['node', 'apps/api/dist/main.js']
+    ports:
+      - '127.0.0.1:4400:4000'
+
+  worker:
+    <<: *app
+    command: ['node', 'apps/worker/dist/main.js']
+
+  provider-a:
+    <<: *app
+    command: ['node', 'apps/mock-provider/dist/main.js']
+    environment:
+      PROVIDER_ID: A
+      PORT: 4101
+
+  provider-b:
+    <<: *app
+    command: ['node', 'apps/mock-provider/dist/main.js']
+    environment:
+      PROVIDER_ID: B
+      PORT: 4102
+
+volumes:
+  postgres-data:

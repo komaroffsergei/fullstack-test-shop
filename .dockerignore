@@ -1,0 +1,12 @@
+.git
+.github
+.env*
+!.env.example
+node_modules
+**/dist
+**/.angular
+coverage
+playwright-report
+test-results
+release
+docs/screenshots

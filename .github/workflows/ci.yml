@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: shop
+          POSTGRES_USER: shop
+          POSTGRES_PASSWORD: shop
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U shop -d shop"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      DATABASE_URL: postgresql://shop:shop@127.0.0.1:5432/shop?schema=public&connection_limit=10
+      ADMIN_TOKEN: ci-admin-token
+      API_ORIGIN: http://127.0.0.1:4000
+      PROVIDER_A_URL: http://127.0.0.1:4101
+      PROVIDER_B_URL: http://127.0.0.1:4102
+      PLAYWRIGHT_EXTERNAL_SERVER: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.2
+          cache: pnpm
+      - run: corepack enable && corepack prepare pnpm@11.7.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate && pnpm db:deploy && pnpm db:seed
+      - run: pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Start application stack
+        run: |
+          pnpm --filter @shop/api start > api.log 2>&1 &
+          pnpm --filter @shop/worker start > worker.log 2>&1 &
+          PROVIDER_ID=A PORT=4101 pnpm --filter @shop/mock-provider start > provider-a.log 2>&1 &
+          PROVIDER_ID=B PORT=4102 pnpm --filter @shop/mock-provider start > provider-b.log 2>&1 &
+          pnpm --filter @shop/web dev > web.log 2>&1 &
+          for i in {1..60}; do curl -fsS http://127.0.0.1:4000/api/health/ready && curl -fsS http://127.0.0.1:4200 && exit 0; sleep 1; done
+          cat api.log worker.log provider-a.log provider-b.log web.log
+          exit 1
+      - run: pnpm test:race
+      - run: pnpm openapi:generate
+      - run: pnpm test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostics
+          path: |
+            *.log
+            playwright-report
+            test-results
+      - run: docker build -t fullstack-test-shop:${{ github.sha }} .
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
