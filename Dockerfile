@@ -24,8 +24,11 @@ ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
+COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder /app/apps/worker/dist ./apps/worker/dist
+COPY --from=builder /app/apps/worker/node_modules ./apps/worker/node_modules
 COPY --from=builder /app/apps/mock-provider/dist ./apps/mock-provider/dist
+COPY --from=builder /app/apps/mock-provider/node_modules ./apps/mock-provider/node_modules
 COPY --from=builder /app/apps/web/dist/web/browser ./apps/api/public
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
