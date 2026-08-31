@@ -5,7 +5,7 @@ Production: Ubuntu VDS, каталог `/opt/fullstack-test-shop`, отдель�
 ## Первый запуск
 
 1. Создать DNS A `test-shop` → `62.113.112.185`.
-2. Скопировать `compose.production.yaml` и создать `.env.production` mode `600`.
+2. Скопировать `compose.production.yaml`, создать `.env.production` по `deploy/env.production.example` и установить mode `600`.
 3. Выполнить migration и seed один раз.
 4. Добавить отдельный Nginx server block, не изменяя существующие сайты.
 5. Проверить HTTP, затем выпустить Certbot certificate и включить redirect.
