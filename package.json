@@ -1,0 +1,40 @@
+{
+  "name": "fullstack-test-shop",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.7.0",
+  "engines": {
+    "node": ">=22.12 <25"
+  },
+  "scripts": {
+    "build": "pnpm -r --if-present build",
+    "dev": "concurrently -n api,worker,provider-a,provider-b,web -c blue,magenta,yellow,cyan,green \"pnpm --filter @shop/api dev\" \"pnpm --filter @shop/worker dev\" \"cross-env PROVIDER_ID=A PORT=4101 pnpm --filter @shop/mock-provider dev\" \"cross-env PROVIDER_ID=B PORT=4102 pnpm --filter @shop/mock-provider dev\" \"pnpm --filter @shop/web dev\"",
+    "db:generate": "pnpm --filter @shop/database generate",
+    "db:migrate": "pnpm --filter @shop/database migrate",
+    "db:deploy": "pnpm --filter @shop/database migrate:deploy",
+    "db:seed": "pnpm --filter @shop/database seed",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "test:race": "tsx tests/race/run.ts",
+    "test:e2e": "playwright test",
+    "openapi:generate": "tsx scripts/generate-openapi.ts",
+    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.34.0",
+    "@playwright/test": "1.62.1",
+    "@types/node": "22.18.0",
+    "concurrently": "9.2.1",
+    "cross-env": "10.0.0",
+    "eslint": "9.34.0",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "16.3.0",
+    "prettier": "3.6.2",
+    "tsx": "4.20.5",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.41.0"
+  }
+}

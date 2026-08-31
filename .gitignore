@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+.angular/
+.env
+.env.*
+!.env.example
+*.log
+playwright-report/
+test-results/
+.codex-doc-review-*/
+.idea/
+.vscode/
+packages/database/prisma/dev.db
+release/

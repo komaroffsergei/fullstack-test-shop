@@ -1,0 +1,8 @@
+node_modules
+dist
+coverage
+.angular
+pnpm-lock.yaml
+packages/database/prisma/migrations
+apps/web/public/assets
+.codex-doc-review-*
