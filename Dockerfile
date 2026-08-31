@@ -1,4 +1,9 @@
-FROM node:22.22.2-bookworm-slim AS base
+FROM node:22.22.2-bookworm-slim AS system
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates openssl \
+  && rm -rf /var/lib/apt/lists/*
+
+FROM system AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable && corepack prepare pnpm@11.7.0 --activate
@@ -19,12 +24,9 @@ FROM dependencies AS builder
 COPY . .
 RUN pnpm db:generate && pnpm build
 
-FROM node:22.22.2-bookworm-slim AS runtime
+FROM system AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates openssl \
-  && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
