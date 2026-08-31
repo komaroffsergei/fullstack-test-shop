@@ -44,13 +44,25 @@ function webhook(orderId: string, eventId: string, amount = 500) {
 }
 
 async function waitDelivered(orderId: string): Promise<void> {
+  await waitStatus(orderId, 'delivered');
+}
+
+async function waitStatus(orderId: string, expected: string): Promise<void> {
   const deadline = Date.now() + 15_000;
   while (Date.now() < deadline) {
     const result = await request<{ status: string }>(`/api/v1/orders/${orderId}`);
-    if (result.body.status === 'delivered') return;
+    if (result.body.status === expected) return;
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
-  throw new Error(`Order ${orderId} was not delivered in time`);
+  throw new Error(`Order ${orderId} did not reach ${expected} in time`);
+}
+
+function admin(path: string, body: unknown) {
+  return request(path, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'X-Admin-Token': adminToken },
+    body: JSON.stringify(body),
+  });
 }
 
 async function assertSingleIssue(orderId: string, expectedEvents: number): Promise<void> {
@@ -101,6 +113,62 @@ async function main(): Promise<void> {
   await waitDelivered(earlyId);
   await assertSingleIssue(earlyId, 1);
   console.log('✓ early webhook is retained and applied after order creation');
+
+  await reset();
+  await prisma.providerKey.deleteMany();
+  const emptyOrder = await createOrder();
+  await webhook(emptyOrder.body.orderId, `evt_${randomUUID()}`);
+  await waitStatus(emptyOrder.body.orderId, 'out_of_stock');
+  await admin('/api/v1/admin/providers/keys', {
+    providerId: 'A',
+    sku: 'STEAM-TOPUP-500',
+    codes: ['RACE-RECOVERY-0001'],
+  });
+  await admin(`/api/v1/admin/orders/${emptyOrder.body.orderId}/retry-delivery`, {});
+  await waitDelivered(emptyOrder.body.orderId);
+  await assertSingleIssue(emptyOrder.body.orderId, 1);
+  console.log('✓ empty pools recover through top-up and idempotent manual retry');
+
+  await reset();
+  await admin('/api/v1/admin/providers/mode', {
+    providerId: 'A',
+    mode: 'timeout_after_issue',
+    delayMs: 1500,
+  });
+  const timeoutOrder = await createOrder();
+  await webhook(timeoutOrder.body.orderId, `evt_${randomUUID()}`);
+  await waitDelivered(timeoutOrder.body.orderId);
+  await assertSingleIssue(timeoutOrder.body.orderId, 1);
+  const timeoutRecord = await prisma.order.findUniqueOrThrow({
+    where: { publicId: timeoutOrder.body.orderId },
+  });
+  const timeoutOutcomes = await prisma.providerCallAttempt.groupBy({
+    by: ['outcome'],
+    where: { providerRequest: { orderId: timeoutRecord.id } },
+    _count: { _all: true },
+  });
+  if (
+    !timeoutOutcomes.some((item) => item.outcome === 'timeout') ||
+    !timeoutOutcomes.some((item) => item.outcome === 'success')
+  ) {
+    throw new Error(
+      `Timeout replay did not produce timeout + success: ${JSON.stringify(timeoutOutcomes)}`,
+    );
+  }
+  console.log('✓ timeout-after-issue replays the same provider request and code');
+
+  await reset();
+  await admin('/api/v1/admin/providers/mode', { providerId: 'A', mode: 'out_of_stock' });
+  const fallbackOrder = await createOrder();
+  await webhook(fallbackOrder.body.orderId, `evt_${randomUUID()}`);
+  await waitDelivered(fallbackOrder.body.orderId);
+  const fallbackRecord = await prisma.order.findUniqueOrThrow({
+    where: { publicId: fallbackOrder.body.orderId },
+    include: { fulfillment: true },
+  });
+  if (fallbackRecord.fulfillment?.providerId !== 'B')
+    throw new Error('Provider B fallback was not used');
+  console.log('✓ explicit Provider A out-of-stock safely falls back to B');
 
   await reset();
   const promoResults = await Promise.all(Array.from({ length: 50 }, () => createOrder('LIMIT3')));

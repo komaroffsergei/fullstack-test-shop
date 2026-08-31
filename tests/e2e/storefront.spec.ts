@@ -11,7 +11,7 @@ test('five required interactions and purchase flow', async ({ page }) => {
   await expect(page.getByRole('navigation', { name: 'Каталог' })).toBeHidden();
 
   await page.getByRole('button', { name: 'Баннер 2' }).click();
-  await expect(page.getByRole('heading', { name: /Steam/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Пополняйте/ })).toBeVisible();
   await page.getByRole('button', { name: '₽' }).click();
   await expect(page.getByRole('button', { name: '₽' })).toHaveClass(/active/);
 
