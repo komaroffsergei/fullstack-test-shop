@@ -1,0 +1,145 @@
+<header class="site-header shell">
+  <a class="brand" routerLink="/" aria-label="GG Shop — на главную"><span>GG</span>SHOP</a>
+  <div class="catalog-wrap">
+    <button
+      class="catalog-button"
+      type="button"
+      (click)="toggleMenu($event)"
+      [attr.aria-expanded]="menuOpen()"
+    >
+      <span class="grid-icon" aria-hidden="true">⊞</span> Каталог
+    </button>
+    @if (menuOpen()) {
+      <nav class="catalog-menu" aria-label="Каталог" (click)="keepMenuOpen($event)">
+        <a href="#products">Игровые ключи</a><a href="#services">Пополнения</a
+        ><a href="#products">Подписки</a>
+        <a href="#products">Подарочные карты</a>
+      </nav>
+    }
+  </div>
+  <label class="search"
+    ><span class="sr-only">Поиск</span><input placeholder="Игра, приложение или услуга…" /><span
+      aria-hidden="true"
+      >⌕</span
+    ></label
+  >
+  <a class="account" routerLink="/admin" aria-label="Открыть админку">♟</a>
+</header>
+
+<main class="shell">
+  <section class="hero" aria-roledescription="carousel" aria-label="Предложения">
+    <button
+      class="hero-arrow left"
+      type="button"
+      aria-label="Предыдущий баннер"
+      (click)="previousSlide()"
+    >
+      ←
+    </button>
+    <div class="hero-copy">
+      <p>{{ currentSlide().eyebrow }}</p>
+      <h1>{{ currentSlide().title }}</h1>
+      <span>{{ currentSlide().text }}</span>
+    </div>
+    <button
+      class="hero-arrow right"
+      type="button"
+      aria-label="Следующий баннер"
+      (click)="nextSlide()"
+    >
+      →
+    </button>
+    <div class="dots" aria-label="Выбор баннера">
+      @for (slide of slides; track slide.title; let index = $index) {
+        <button
+          type="button"
+          [class.active]="index === activeSlide()"
+          (click)="activeSlide.set(index)"
+          [attr.aria-label]="'Баннер ' + (index + 1)"
+        ></button>
+      }
+    </div>
+  </section>
+
+  <section class="services" id="services" aria-label="Сервисы">
+    @for (service of services; track service[0]) {
+      <button type="button" class="service-item">
+        <span class="service-icon"><img [src]="service[1]" [alt]="service[0]" /></span
+        ><strong>{{ service[0] }}</strong>
+      </button>
+    }
+    <button type="button" class="service-item more">
+      <span class="service-icon">◈</span><strong>Ещё 841</strong>
+    </button>
+  </section>
+
+  <section class="steam-panel" aria-label="Пополнение Steam">
+    <div class="steam-title">
+      <img src="/assets/steam.png" alt="" /><span
+        ><strong>Пополнение Steam</strong><small>Ввести промокод⌄</small></span
+      ><b>5%</b>
+    </div>
+    <label
+      ><span>♟</span><input aria-label="Логин Steam" placeholder="Логин Steam" /><i>i</i></label
+    >
+    <label
+      ><span>◉</span><input aria-label="Сумма" value="500₽" /><span class="currencies">
+        @for (item of ['$', '₸', '₽']; track item) {
+          <button
+            type="button"
+            [class.active]="currency() === item"
+            (click)="currency.set($any(item))"
+          >
+            {{ item }}
+          </button>
+        }
+      </span></label
+    >
+    <button
+      class="pay-button"
+      type="button"
+      (click)="buy('STEAM-TOPUP-500')"
+      [disabled]="!!buying()"
+    >
+      {{ buying() ? 'Создаём заказ…' : 'Оплатить 500₽' }}
+    </button>
+  </section>
+
+  <section class="products" id="products">
+    <div class="section-heading">
+      <h2>Популярные товары</h2>
+      <div class="chips">
+        <button class="active">▦ Донат</button><button>Подписки</button><button>Ключи</button
+        ><button>Игровая валюта</button>
+      </div>
+    </div>
+    @if (error()) {
+      <p class="error" role="alert">{{ error() }}</p>
+    }
+    @if (loading()) {
+      <div class="loading">Загружаем каталог…</div>
+    } @else {
+      <div class="product-grid">
+        @for (product of visibleProducts(); track product.sku) {
+          <article class="product-card">
+            <img [src]="productImage()" [alt]="product.name" />
+            <div class="product-body">
+              <small>🔥 {{ product.type }} · мгновенно</small>
+              <h3>{{ product.name }}</h3>
+              <div class="price">
+                <strong>{{ product.price }} ₽</strong><s>{{ product.price + 1000 }} ₽</s>
+              </div>
+              <button type="button" (click)="buy(product.sku)" [disabled]="!!buying()">
+                {{ buying() === product.sku ? 'Подождите…' : 'Купить' }}
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+</main>
+
+<footer class="shell mini-footer">
+  <span>Демо для тестового задания</span><a routerLink="/admin">Админка восстановления</a>
+</footer>

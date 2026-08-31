@@ -1,0 +1,75 @@
+<main class="page-shell">
+  <a class="back" routerLink="/">← Вернуться в магазин</a>
+  @if (error()) {
+    <p class="notice error">{{ error() }}</p>
+  }
+  @if (order(); as current) {
+    <section class="order-card">
+      <div class="order-head">
+        <span>Заказ</span><code>{{ current.orderId }}</code>
+      </div>
+      <div class="status-mark" [attr.data-status]="current.status">
+        <i></i>
+        <div>
+          <small>Текущий статус</small>
+          <h1>{{ label(current.status) }}</h1>
+        </div>
+      </div>
+      <dl>
+        <div>
+          <dt>Товар</dt>
+          <dd>{{ current.productName }}</dd>
+        </div>
+        <div>
+          <dt>Стоимость</dt>
+          <dd>{{ money(current.finalPriceMinor) }}</dd>
+        </div>
+        @if (current.promoCode) {
+          <div>
+            <dt>Промокод</dt>
+            <dd>{{ current.promoCode }} (−{{ money(current.discountMinor) }})</dd>
+          </div>
+        }
+      </dl>
+      @if (current.status === 'created') {
+        <div class="actions">
+          <button
+            class="primary"
+            type="button"
+            (click)="simulate('paid')"
+            [disabled]="actionPending()"
+          >
+            Оплатить успешно</button
+          ><button type="button" (click)="simulate('failed')" [disabled]="actionPending()">
+            Сымитировать отказ
+          </button>
+        </div>
+      }
+      @if (current.code) {
+        <div class="code-box">
+          <span>Ваш код</span><strong>{{ current.code }}</strong
+          ><small>Скопируйте и сохраните его</small>
+        </div>
+      }
+      @if (current.status === 'out_of_stock' || current.status === 'delivery_failed') {
+        <p class="notice">
+          Оплата сохранена. Пополните пул и безопасно повторите выдачу в
+          <a routerLink="/admin">админке</a>.
+        </p>
+      }
+    </section>
+    <section class="history">
+      <h2>История</h2>
+      @for (item of current.history; track item.createdAt) {
+        <div>
+          <time>{{ item.createdAt | date: 'dd.MM.yyyy HH:mm:ss' }}</time
+          ><span
+            >{{ item.from || '—' }} → <b>{{ item.to }}</b></span
+          ><small>{{ item.reason }}</small>
+        </div>
+      }
+    </section>
+  } @else {
+    <div class="loading">Загружаем заказ…</div>
+  }
+</main>

@@ -1,0 +1,55 @@
+<main class="admin-shell">
+  <a routerLink="/">← В магазин</a>
+  <header>
+    <div>
+      <p>Служебный раздел</p>
+      <h1>Восстановление выдачи</h1>
+    </div>
+    <button class="danger" type="button" (click)="reset()">Сбросить демо</button>
+  </header>
+  <section class="auth">
+    <label>Admin token <input type="password" [(ngModel)]="token" (keyup.enter)="load()" /></label
+    ><button type="button" (click)="load()">Обновить список</button><span>{{ message() }}</span>
+  </section>
+  <section>
+    <h2>Оплачены, но не выданы</h2>
+    <div class="table">
+      <div class="row head"><span>Заказ</span><span>SKU</span><span>Статус</span><span></span></div>
+      @for (order of orders(); track order.orderId) {
+        <div class="row">
+          <code>{{ order.orderId }}</code
+          ><span>{{ order.sku }}</span
+          ><b>{{ order.status }}</b
+          ><button type="button" (click)="retry(order.orderId)">Повторить</button>
+        </div>
+      } @empty {
+        <p class="empty">Восстановимых заказов нет</p>
+      }
+    </div>
+  </section>
+  <section class="provider">
+    <h2>Заглушки поставщиков</h2>
+    <div class="controls">
+      <label
+        >Поставщик<select [(ngModel)]="provider">
+          <option>A</option>
+          <option>B</option>
+        </select></label
+      ><label
+        >Режим<select [(ngModel)]="mode">
+          <option value="success">success</option>
+          <option value="out_of_stock">out-of-stock</option>
+          <option value="server_error_before_issue">5xx before issue</option>
+          <option value="timeout_after_issue">timeout after issue</option>
+        </select></label
+      ><button type="button" (click)="setMode()">Применить</button>
+    </div>
+    <label class="key-input"
+      >Новые ключи, по одному на строку<textarea
+        [(ngModel)]="codes"
+        rows="4"
+        placeholder="DEMO-KEY-0001"
+      ></textarea></label
+    ><button type="button" (click)="addKeys()">Добавить в Provider {{ provider }}</button>
+  </section>
+</main>
