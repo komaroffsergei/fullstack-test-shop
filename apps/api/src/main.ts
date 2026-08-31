@@ -6,12 +6,33 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { randomUUID } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
   app.use(helmet({ contentSecurityPolicy: false }));
+  app.use((request: Request, response: Response, next: NextFunction) => {
+    const requestId = request.header('x-request-id') ?? randomUUID();
+    const startedAt = Date.now();
+    response.setHeader('x-request-id', requestId);
+    response.on('finish', () =>
+      console.info(
+        JSON.stringify({
+          level: 'info',
+          message: 'http_request',
+          requestId,
+          method: request.method,
+          path: request.path,
+          statusCode: response.statusCode,
+          durationMs: Date.now() - startedAt,
+          timestamp: new Date().toISOString(),
+        }),
+      ),
+    );
+    next();
+  });
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }),
   );

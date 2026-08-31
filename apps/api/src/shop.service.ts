@@ -5,7 +5,13 @@ import {
   ServiceUnavailableException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { Prisma, ProviderFaultMode, ProviderId, prisma } from '@shop/database';
+import {
+  INITIAL_PROVIDER_KEY_ROWS,
+  Prisma,
+  ProviderFaultMode,
+  ProviderId,
+  prisma,
+} from '@shop/database';
 import { calculatePrice, fingerprintOrder } from '@shop/domain';
 import { randomUUID } from 'node:crypto';
 import type {
@@ -57,66 +63,64 @@ export class ShopService {
     if (existing) return this.validateReplay(existing, fingerprint);
 
     try {
-      const created = await prisma.$transaction(
-        async (tx) => {
-          const product = await tx.product.findUnique({ where: { sku: input.sku } });
-          if (!product?.active) throw new NotFoundException('Product not found');
+      const created = await prisma.$transaction(async (tx) => {
+        const product = await tx.product.findUnique({ where: { sku: input.sku } });
+        if (!product?.active) throw new NotFoundException('Product not found');
 
-          let promo: LockedPromo | undefined;
-          if (input.promoCode) {
-            const normalized = input.promoCode.trim().toUpperCase();
-            [promo] = await tx.$queryRaw<LockedPromo[]>`
+        let promo: LockedPromo | undefined;
+        if (input.promoCode) {
+          const normalized = input.promoCode.trim().toUpperCase();
+          [promo] = await tx.$queryRaw<LockedPromo[]>`
               SELECT id, code, type::text, value, currency, max_uses, used_count, active
               FROM promocodes WHERE code = ${normalized} FOR UPDATE
             `;
-            if (!promo?.active) throw new UnprocessableEntityException('Promocode is invalid');
-            if (promo.used_count >= promo.max_uses) {
-              throw new ConflictException('Promocode usage limit reached');
-            }
-            if (promo.currency && promo.currency !== product.currency) {
-              throw new UnprocessableEntityException('Promocode currency does not match');
-            }
+          if (!promo?.active) throw new UnprocessableEntityException('Promocode is invalid');
+          if (promo.used_count >= promo.max_uses) {
+            throw new ConflictException('Promocode usage limit reached');
           }
+          if (promo.currency && promo.currency !== product.currency) {
+            throw new UnprocessableEntityException('Promocode currency does not match');
+          }
+        }
 
-          const price = calculatePrice(
-            product.priceMinor,
-            promo ? { type: promo.type, value: promo.value } : undefined,
-          );
-          const order = await tx.order.create({
+        const price = calculatePrice(
+          product.priceMinor,
+          promo ? { type: promo.type, value: promo.value } : undefined,
+        );
+        const order = await tx.order.create({
+          data: {
+            publicId: input.orderId,
+            idempotencyKey,
+            idempotencyPayload: fingerprint,
+            productId: product.id,
+            sku: product.sku,
+            ...price,
+            currency: product.currency,
+            promoCode: promo?.code,
+            histories: { create: { to: 'created', reason: 'order_created' } },
+          },
+        });
+        if (promo) {
+          await tx.promoRedemption.create({
             data: {
-              publicId: input.orderId,
-              idempotencyKey,
-              idempotencyPayload: fingerprint,
-              productId: product.id,
-              sku: product.sku,
-              ...price,
-              currency: product.currency,
-              promoCode: promo?.code,
-              histories: { create: { to: 'created', reason: 'order_created' } },
+              promocodeId: promo.id,
+              orderId: order.id,
+              discountMinor: price.discountMinor,
             },
           });
-          if (promo) {
-            await tx.promoRedemption.create({
-              data: {
-                promocodeId: promo.id,
-                orderId: order.id,
-                discountMinor: price.discountMinor,
-              },
-            });
-            await tx.promocode.update({
-              where: { id: promo.id },
-              data: { usedCount: { increment: 1 } },
-            });
-          }
-          return order;
-        },
-        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-      );
+          await tx.promocode.update({
+            where: { id: promo.id },
+            data: { usedCount: { increment: 1 } },
+          });
+        }
+        return order;
+      });
       return { replay: false, order: await this.order(created.publicId) };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         const winner = await prisma.order.findUnique({ where: { idempotencyKey } });
         if (winner) return this.validateReplay(winner, fingerprint);
+        throw new ConflictException('Order ID is already used by another purchase intent');
       }
       throw error;
     }
@@ -271,7 +275,8 @@ export class ShopService {
       await tx.orderStatusHistory.deleteMany();
       await tx.promoRedemption.deleteMany();
       await tx.order.deleteMany();
-      await tx.providerKey.updateMany({ data: { issuedAt: null, requestId: null } });
+      await tx.providerKey.deleteMany();
+      await tx.providerKey.createMany({ data: INITIAL_PROVIDER_KEY_ROWS });
       await tx.promocode.updateMany({ data: { usedCount: 0, active: true } });
       await tx.providerSetting.updateMany({ data: { faultMode: 'success', delayMs: 1500 } });
     });
