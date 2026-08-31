@@ -1,0 +1,246 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  created
+  paid
+  delivering
+  delivered
+  payment_failed
+  out_of_stock
+  delivery_failed
+}
+
+enum PaymentEventStatus {
+  paid
+  failed
+}
+
+enum InboxState {
+  pending
+  processed
+  invalid
+}
+
+enum JobStatus {
+  pending
+  processing
+  retry
+  succeeded
+  failed
+}
+
+enum ProviderId {
+  A
+  B
+}
+
+enum AttemptOutcome {
+  success
+  out_of_stock
+  server_error
+  timeout
+  invalid_response
+}
+
+enum PromoType {
+  percent
+  amount
+}
+
+enum ProviderFaultMode {
+  success
+  out_of_stock
+  server_error_before_issue
+  timeout_after_issue
+}
+
+model Product {
+  id         BigInt   @id @default(autoincrement())
+  sku        String   @unique
+  name       String
+  type       String
+  priceMinor Int      @map("price_minor")
+  currency   String   @default("RUB")
+  image      String
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  orders     Order[]
+
+  @@map("products")
+}
+
+model Order {
+  id                 BigInt      @id @default(autoincrement())
+  publicId           String      @unique @map("public_id") @db.Uuid
+  idempotencyKey     String      @unique @map("idempotency_key")
+  idempotencyPayload String      @map("idempotency_payload")
+  productId          BigInt      @map("product_id")
+  sku                String
+  basePriceMinor     Int         @map("base_price_minor")
+  discountMinor      Int         @default(0) @map("discount_minor")
+  finalPriceMinor    Int         @map("final_price_minor")
+  currency           String
+  promoCode          String?     @map("promo_code")
+  status             OrderStatus @default(created)
+  createdAt          DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+  product            Product     @relation(fields: [productId], references: [id])
+  fulfillment        Fulfillment?
+  deliveryJob        DeliveryJob?
+  histories          OrderStatusHistory[]
+  providerRequests   ProviderRequest[]
+  promoRedemption    PromoRedemption?
+
+  @@index([productId])
+  @@index([status, createdAt])
+  @@map("orders")
+}
+
+model PaymentEvent {
+  id            BigInt             @id @default(autoincrement())
+  eventId       String             @unique @map("event_id")
+  orderPublicId String             @map("order_public_id") @db.Uuid
+  status        PaymentEventStatus
+  amountMinor   Int                @map("amount_minor")
+  currency      String
+  occurredAt    DateTime           @map("occurred_at") @db.Timestamptz(3)
+  receivedAt    DateTime           @default(now()) @map("received_at") @db.Timestamptz(3)
+  inboxState    InboxState         @default(pending) @map("inbox_state")
+  processedAt   DateTime?          @map("processed_at") @db.Timestamptz(3)
+  reason        String?
+  payload       Json
+
+  @@index([inboxState, receivedAt])
+  @@index([orderPublicId, occurredAt])
+  @@map("payment_events")
+}
+
+model DeliveryJob {
+  id          BigInt    @id @default(autoincrement())
+  orderId     BigInt    @unique @map("order_id")
+  status      JobStatus @default(pending)
+  attempts    Int       @default(0)
+  runAfter    DateTime  @default(now()) @map("run_after") @db.Timestamptz(3)
+  leaseUntil  DateTime? @map("lease_until") @db.Timestamptz(3)
+  workerId    String?   @map("worker_id")
+  lastError   String?   @map("last_error")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([status, runAfter])
+  @@map("delivery_jobs")
+}
+
+model ProviderRequest {
+  id          BigInt     @id @default(autoincrement())
+  orderId     BigInt     @map("order_id")
+  providerId  ProviderId @map("provider_id")
+  requestId   String     @unique @map("request_id") @db.Uuid
+  lastOutcome AttemptOutcome? @map("last_outcome")
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  order       Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  attempts    ProviderCallAttempt[]
+
+  @@unique([orderId, providerId])
+  @@index([orderId])
+  @@map("provider_requests")
+}
+
+model ProviderCallAttempt {
+  id                BigInt          @id @default(autoincrement())
+  providerRequestId BigInt          @map("provider_request_id")
+  outcome           AttemptOutcome
+  httpStatus        Int?            @map("http_status")
+  durationMs        Int             @map("duration_ms")
+  detail            String?
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  providerRequest   ProviderRequest @relation(fields: [providerRequestId], references: [id], onDelete: Cascade)
+
+  @@index([providerRequestId])
+  @@map("provider_call_attempts")
+}
+
+model Fulfillment {
+  id         BigInt   @id @default(autoincrement())
+  orderId    BigInt   @unique @map("order_id")
+  providerId ProviderId @map("provider_id")
+  requestId  String   @map("request_id") @db.Uuid
+  code       String   @unique
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("fulfillments")
+}
+
+model OrderStatusHistory {
+  id        BigInt      @id @default(autoincrement())
+  orderId   BigInt      @map("order_id")
+  from      OrderStatus?
+  to        OrderStatus
+  reason    String
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, createdAt])
+  @@map("order_status_history")
+}
+
+model Promocode {
+  id           BigInt    @id @default(autoincrement())
+  code         String    @unique
+  type         PromoType
+  value        Int
+  currency     String?
+  maxUses      Int       @map("max_uses")
+  usedCount    Int       @default(0) @map("used_count")
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  redemptions  PromoRedemption[]
+
+  @@map("promocodes")
+}
+
+model PromoRedemption {
+  id            BigInt    @id @default(autoincrement())
+  promocodeId   BigInt    @map("promocode_id")
+  orderId       BigInt    @unique @map("order_id")
+  discountMinor Int       @map("discount_minor")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  promocode     Promocode @relation(fields: [promocodeId], references: [id])
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([promocodeId])
+  @@map("promo_redemptions")
+}
+
+model ProviderKey {
+  id         BigInt     @id @default(autoincrement())
+  providerId ProviderId @map("provider_id")
+  sku        String
+  code       String     @unique
+  issuedAt   DateTime?  @map("issued_at") @db.Timestamptz(3)
+  requestId  String?    @unique @map("request_id") @db.Uuid
+  createdAt  DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([providerId, sku, issuedAt])
+  @@map("provider_keys")
+}
+
+model ProviderSetting {
+  providerId ProviderId       @id @map("provider_id")
+  faultMode  ProviderFaultMode @default(success) @map("fault_mode")
+  delayMs    Int              @default(1500) @map("delay_ms")
+  updatedAt  DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("provider_settings")
+}
