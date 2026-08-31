@@ -37,8 +37,8 @@ jobs:
             previous=$(docker compose --env-file .env.production -f compose.production.yaml images -q app || true)
             export IMAGE
             docker compose --env-file .env.production -f compose.production.yaml pull
-            docker compose --env-file .env.production -f compose.production.yaml run --rm app ./node_modules/.bin/prisma migrate deploy --schema packages/database/prisma/schema.prisma
-            docker compose --env-file .env.production -f compose.production.yaml run --rm app ./node_modules/.bin/tsx packages/database/prisma/seed.ts
+            docker compose --env-file .env.production -f compose.production.yaml run --rm app ./packages/database/node_modules/.bin/prisma migrate deploy --schema packages/database/prisma/schema.prisma
+            docker compose --env-file .env.production -f compose.production.yaml run --rm app ./packages/database/node_modules/.bin/tsx packages/database/prisma/seed.ts
             docker compose --env-file .env.production -f compose.production.yaml up -d
             for i in $(seq 1 30); do
               if curl -fsS http://127.0.0.1:4400/api/health/ready; then exit 0; fi
