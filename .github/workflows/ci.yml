@@ -65,7 +65,7 @@ jobs:
           docker run --rm --entrypoint node fullstack-test-shop:${{ github.sha }} \
             -e "for (const path of ['/app/apps/api', '/app/apps/worker', '/app/apps/mock-provider']) require.resolve('reflect-metadata', { paths: [path] })"
           docker run --rm --entrypoint sh fullstack-test-shop:${{ github.sha }} \
-            -c "test -x packages/database/node_modules/.bin/prisma && test -x packages/database/node_modules/.bin/tsx"
+            -c "openssl version && test -x packages/database/node_modules/.bin/prisma && test -x packages/database/node_modules/.bin/tsx"
 
   secret-scan:
     runs-on: ubuntu-latest
