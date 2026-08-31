@@ -26,3 +26,14 @@ test('five required interactions and purchase flow', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Товар выдан' })).toBeVisible({ timeout: 15_000 });
   await expect(page.locator('.code-box strong')).toHaveText(/[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}/);
 });
+
+test('narrow viewport does not overflow horizontally', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  const dimensions = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+  }));
+  expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth);
+});

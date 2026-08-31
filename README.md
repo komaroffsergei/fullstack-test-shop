@@ -64,6 +64,7 @@ pnpm test:e2e
 
 - [CODEMAP.md](CODEMAP.md) — entrypoints, модули, таблицы и карта тестов.
 - [docs/REQUIREMENTS_MATRIX.md](docs/REQUIREMENTS_MATRIX.md) — полное соответствие ТЗ.
+- [docs/FIDELITY_LEDGER.md](docs/FIDELITY_LEDGER.md) — сверка браузера с макетом.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — схемы контейнеров, последовательностей и состояний.
 - [docs/API.md](docs/API.md), [docs/TESTING.md](docs/TESTING.md), [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md), [docs/SECURITY.md](docs/SECURITY.md).
 - [docs/TIMELOG.md](docs/TIMELOG.md) — фактический замер времени.
