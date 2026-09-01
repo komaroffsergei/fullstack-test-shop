@@ -8,7 +8,9 @@
 - Выдача: отдельный worker и две HTTP-заглушки поставщиков.
 - Production URL: [test-shop.komaroff-dev.ru](https://test-shop.komaroff-dev.ru)
 - API docs: [test-shop.komaroff-dev.ru/api/docs](https://test-shop.komaroff-dev.ru/api/docs)
-- Offline release: [v1.1.0 с чистым ZIP](https://github.com/komaroffsergei/fullstack-test-shop/releases/tag/v1.1.0)
+- Учебник на production: [test-shop.komaroff-dev.ru/docs/](https://test-shop.komaroff-dev.ru/docs/)
+- README на production: [test-shop.komaroff-dev.ru/docs/README.md](https://test-shop.komaroff-dev.ru/docs/README.md)
+- Offline release: [v1.1.1 с чистым ZIP](https://github.com/komaroffsergei/fullstack-test-shop/releases/tag/v1.1.1)
 - CI: format, typed lint, strict typecheck (workspace + root), unit, 13-scenario race, E2E, OpenAPI, offline-doc verification, Docker runtime smoke и gitleaks.
 
 ## Быстрый запуск
@@ -129,10 +131,11 @@ pnpm dev
 ```powershell
 curl.exe -fsS http://127.0.0.1:4000/api/health/live
 curl.exe -fsS http://127.0.0.1:4000/api/health/ready
+curl.exe -fsS http://127.0.0.1:4000/docs/README.md
 curl.exe -fsS http://127.0.0.1:4200/
 ```
 
-Ожидается: оба health endpoint возвращают `{"status":"ok"}`, а Angular — HTML с HTTP `200`.
+Ожидается: оба health endpoint возвращают `{"status":"ok"}`, README начинается с `# fullstack-test-shop`, а Angular отвечает HTML с HTTP `200`.
 
 ### 3. Гонки, OpenAPI и браузер
 
@@ -230,17 +233,17 @@ pnpm test:production
 Production acceptance complete: 9/9 scenarios passed.
 ```
 
-|   № | Production-сценарий через Nginx/TLS                | Ожидание                                                                 | Зафиксированный результат |
-| --: | -------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------- |
-|   1 | HTTPS surface/health/catalog/OpenAPI/metrics/admin | root `200`, live/ready `ok`, 12 товаров, 14 paths, anonymous admin `401` | PASS, 492 мс              |
-|   2 | idempotent double click/conflict/money tamper      | один заказ; replay тот же; conflict/money tamper отклонены               | PASS, 192 мс              |
-|   3 | 50 identical + 50 unique paid webhook              | однократная выдача в обеих группах                                       | PASS, 2028 мс             |
-|   4 | early/unordered payment events                     | нет потери, дубля или регрессии                                          | PASS, 1713 мс             |
-|   5 | out-of-stock + concurrent recovery                 | восстановимый статус и один код после двух retry                         | PASS, 990 мс              |
-|   6 | timeout-after-issue                                | безопасный replay того же request A                                      | PASS, 1815 мс             |
-|   7 | Provider A out-of-stock                            | однозначный fallback на B                                                | PASS, 317 мс              |
-|   8 | два ответа provider 5xx                            | `delivery_failed`, затем безопасное восстановление                       | PASS, 729 мс              |
-|   9 | LIMIT3 × 50                                        | не более трёх применений                                                 | PASS, 671 мс              |
+|   № | Production-сценарий через Nginx/TLS                     | Ожидание                                                                                         | Зафиксированный результат                |
+| --: | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------- |
+|   1 | HTTPS surface/docs/health/catalog/OpenAPI/metrics/admin | root и весь `/docs` комплект `200`, live/ready `ok`, 12 товаров, 14 paths, anonymous admin `401` | PASS, автоматический gate каждого deploy |
+|   2 | idempotent double click/conflict/money tamper           | один заказ; replay тот же; conflict/money tamper отклонены                                       | PASS, 192 мс                             |
+|   3 | 50 identical + 50 unique paid webhook                   | однократная выдача в обеих группах                                                               | PASS, 2028 мс                            |
+|   4 | early/unordered payment events                          | нет потери, дубля или регрессии                                                                  | PASS, 1713 мс                            |
+|   5 | out-of-stock + concurrent recovery                      | восстановимый статус и один код после двух retry                                                 | PASS, 990 мс                             |
+|   6 | timeout-after-issue                                     | безопасный replay того же request A                                                              | PASS, 1815 мс                            |
+|   7 | Provider A out-of-stock                                 | однозначный fallback на B                                                                        | PASS, 317 мс                             |
+|   8 | два ответа provider 5xx                                 | `delivery_failed`, затем безопасное восстановление                                               | PASS, 729 мс                             |
+|   9 | LIMIT3 × 50                                             | не более трёх применений                                                                         | PASS, 671 мс                             |
 
 Для отдельной браузерной проверки production:
 
@@ -282,6 +285,7 @@ pnpm test:production
 
 - [Интерактивный HTML-учебник](docs/tutorial/index.html) — подробный курс по стеку и всем критическим потокам, переключатель «профессионально / как для 10 лет», контрольные вопросы и code map с прямыми ссылками на GitHub.
 - [Автономный HTML source handbook](docs/offline/index.html) — 100+ точных текстовых исходников внутри одного HTML: поиск по именам/коду, номера строк, deep links, копирование/скачивание, две версии объяснения и SHA-256 каждого файла. Интернет не нужен.
+- [Публичная копия документации](https://test-shop.komaroff-dev.ru/docs/) — тот же tutorial, offline handbook, README и CODEMAP из immutable production-образа.
 - [CODEMAP.md](CODEMAP.md) — entrypoints, модули, таблицы и карта тестов.
 - [docs/REQUIREMENTS_MATRIX.md](docs/REQUIREMENTS_MATRIX.md) — полное соответствие ТЗ.
 - [docs/ACCEPTANCE_REPORT.md](docs/ACCEPTANCE_REPORT.md) — фактические локальные/CI/production результаты.
@@ -293,7 +297,7 @@ pnpm test:production
 
 ## Production
 
-Приложение работает с одного origin за Nginx и Let's Encrypt. На VDS запущены `app`, `worker`, `provider-a`, `provider-b` и PostgreSQL; наружу опубликован только `app` на loopback-интерфейсе. Релизный workflow разворачивает immutable GHCR-образ по git SHA, выполняет миграции и health-check. Production-секреты хранятся только на сервере и в GitHub Actions secrets.
+Приложение работает с одного origin за Nginx и Let's Encrypt. На VDS запущены `app`, `worker`, `provider-a`, `provider-b` и PostgreSQL; наружу опубликован только `app` на loopback-интерфейсе. NestJS раздаёт Angular, `/docs/tutorial/`, `/docs/offline/`, `/docs/README.md` и `/docs/CODEMAP.md` из одного immutable образа. Релизный workflow разворачивает GHCR-образ по git SHA, выполняет миграции и health-check. Production-секреты хранятся только на сервере и в GitHub Actions secrets.
 
 ## Осознанные границы
 

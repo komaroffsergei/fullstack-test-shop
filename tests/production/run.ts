@@ -35,15 +35,31 @@ async function scenario(
   console.log(`✓ ${name} (${durationMs} ms)`);
 }
 
-/** Проверяет HTTPS-страницу, операции, seed и отсутствие анонимного доступа к admin API. */
+/** Проверяет HTTPS-страницу, документацию, seed и отсутствие анонимного admin-доступа. */
 async function verifySurface(): Promise<Record<string, string | number | boolean>> {
-  const [page, live, ready, catalog, openapi, metrics, unauthorized] = await Promise.all([
+  const [
+    page,
+    live,
+    ready,
+    catalog,
+    openapi,
+    metrics,
+    tutorial,
+    offline,
+    readme,
+    codemap,
+    unauthorized,
+  ] = await Promise.all([
     client.text('/'),
     client.json<{ status: string }>('/api/health/live'),
     client.json<{ status: string }>('/api/health/ready'),
     client.json<Array<{ sku: string; priceMinor: number }>>('/api/v1/catalog/products'),
     client.json<{ paths?: Record<string, unknown> }>('/api/openapi.json'),
     client.text('/api/metrics'),
+    client.text('/docs/tutorial/'),
+    client.text('/docs/offline/'),
+    client.text('/docs/README.md'),
+    client.text('/docs/CODEMAP.md'),
     client.json('/api/v1/admin/recovery/orders'),
   ]);
   assertCondition(
@@ -61,11 +77,23 @@ async function verifySurface(): Promise<Record<string, string | number | boolean
     'Production OpenAPI is incomplete',
   );
   assertCondition(metrics.body.includes('shop_delivery_queue_length'), 'Metrics are incomplete');
+  assertCondition(
+    tutorial.status === 200 &&
+      tutorial.body.includes('Fullstack Test Shop — интерактивный учебник') &&
+      offline.status === 200 &&
+      offline.body.includes('Исходный код, который можно изучать офлайн') &&
+      readme.status === 200 &&
+      readme.body.includes('# fullstack-test-shop') &&
+      codemap.status === 200 &&
+      codemap.body.includes('# CODEMAP: от требования к точной строке кода'),
+    'Production documentation bundle is unavailable or stale',
+  );
   assertCondition(unauthorized.status === 401, 'Admin endpoint is anonymously accessible');
   return {
     https: baseUrl.startsWith('https://'),
     products: catalog.body.length,
     openapiPaths: Object.keys(openapi.body.paths ?? {}).length,
+    publicDocs: true,
     anonymousAdminStatus: unauthorized.status,
   };
 }

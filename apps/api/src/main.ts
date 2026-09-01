@@ -56,7 +56,37 @@ async function bootstrap(): Promise<void> {
     .getInstance()
     .get('/api/openapi.json', (_request: Request, response: Response) => response.json(document));
 
-  const webRoot = join(process.cwd(), 'public');
+  const processRoot = process.cwd();
+  // pnpm filter запускает dev из apps/api, а Docker — из /app; выбираем существующий корень monorepo.
+  const repositoryRoot = existsSync(join(processRoot, 'docs'))
+    ? processRoot
+    : join(processRoot, '..', '..');
+  const docsRoot = join(repositoryRoot, 'docs');
+  const readmePath = join(repositoryRoot, 'README.md');
+  const codemapPath = join(repositoryRoot, 'CODEMAP.md');
+  const http = app.getHttpAdapter().getInstance();
+  if (existsSync(docsRoot)) {
+    // Единая точка /docs ведёт в HTML-учебник, а вложенные материалы раздаются без внешнего CDN.
+    http.get(['/docs', '/docs/'], (_request: Request, response: Response) =>
+      response.redirect(302, '/docs/tutorial/'),
+    );
+    // Корневая документация лежит рядом с приложениями и доступна локально и в production одинаково.
+    app.useStaticAssets(docsRoot, { prefix: '/docs' });
+  }
+  if (existsSync(readmePath)) {
+    // README выдаётся как исходный Markdown: GitHub и автономный handbook показывают тот же файл.
+    http.get('/docs/README.md', (_request: Request, response: Response) =>
+      response.sendFile(readmePath),
+    );
+  }
+  if (existsSync(codemapPath)) {
+    // CODEMAP остаётся одним источником правды для GitHub, локальной копии и публичного домена.
+    http.get('/docs/CODEMAP.md', (_request: Request, response: Response) =>
+      response.sendFile(codemapPath),
+    );
+  }
+
+  const webRoot = join(repositoryRoot, 'public');
   if (existsSync(webRoot)) {
     // Production-контейнер отдаёт собранный Angular с того же origin, что и API.
     app.useStaticAssets(webRoot);

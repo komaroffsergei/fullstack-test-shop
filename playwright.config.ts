@@ -17,7 +17,8 @@ export default defineConfig({
     ? undefined
     : {
         command: 'pnpm dev',
-        url: 'http://127.0.0.1:4200',
+        // Запрос идёт через Angular proxy: один URL доказывает готовность и web, и Nest/PostgreSQL.
+        url: 'http://127.0.0.1:4200/api/health/ready',
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
       },

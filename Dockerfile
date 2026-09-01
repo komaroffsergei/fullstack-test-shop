@@ -41,6 +41,10 @@ COPY --from=builder /app/apps/mock-provider/dist ./apps/mock-provider/dist
 COPY --from=builder /app/apps/mock-provider/node_modules ./apps/mock-provider/node_modules
 # Angular кладётся в /app/public — именно этот путь раздаёт NestJS API.
 COPY --from=builder /app/apps/web/dist/web/browser ./public
+# Учебники и исходная документация публикуются тем же NestJS без отдельного web-сервера.
+COPY --from=builder /app/docs ./docs
+COPY --from=builder /app/README.md ./README.md
+COPY --from=builder /app/CODEMAP.md ./CODEMAP.md
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
 COPY --from=builder /app/apps/worker/package.json ./apps/worker/package.json

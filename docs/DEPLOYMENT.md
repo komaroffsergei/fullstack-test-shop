@@ -35,7 +35,7 @@ Production secrets находятся только в `/opt/fullstack-test-shop/
 - DNS A-запись разрешается в `62.113.112.185`.
 - Nginx публикует только `https://test-shop.komaroff-dev.ru`; upstream слушает `127.0.0.1:4400`.
 - Сертификат Let's Encrypt установлен с автоматическим renew.
-- После deployment проверяются `/api/health/ready`, главная, Angular SPA fallback, каталог, OpenAPI и metrics.
+- После deployment проверяются `/api/health/ready`, главная, Angular SPA fallback, каталог, OpenAPI, metrics и публичный комплект `/docs`.
 - Admin API возвращает `401` без `X-Admin-Token` и `200` с серверным токеном.
 - Внешний Playwright smoke-test проходит полный путь покупки до статуса `delivered`.
 
@@ -43,13 +43,13 @@ Production secrets находятся только в `/opt/fullstack-test-shop/
 
 ## Контейнеры production
 
-| Service      | Назначение                     | Публичный port          |
-| ------------ | ------------------------------ | ----------------------- |
-| `app`        | NestJS API + static Angular    | только `127.0.0.1:4400` |
-| `worker`     | payment inbox + delivery queue | нет                     |
-| `provider-a` | internal `/issue` A            | нет                     |
-| `provider-b` | internal `/issue` B            | нет                     |
-| `postgres`   | durable data/locks             | нет                     |
+| Service      | Назначение                       | Публичный port          |
+| ------------ | -------------------------------- | ----------------------- |
+| `app`        | NestJS API + static Angular/docs | только `127.0.0.1:4400` |
+| `worker`     | payment inbox + delivery queue   | нет                     |
+| `provider-a` | internal `/issue` A              | нет                     |
+| `provider-b` | internal `/issue` B              | нет                     |
+| `postgres`   | durable data/locks               | нет                     |
 
 Все четыре Node service используют один immutable image, но разные command/env. Это исключает расхождение версий API/worker/provider при deploy.
 
@@ -80,6 +80,10 @@ curl -fsS https://test-shop.komaroff-dev.ru/api/health/ready
 curl -fsS https://test-shop.komaroff-dev.ru/api/v1/catalog/products
 curl -fsS https://test-shop.komaroff-dev.ru/api/openapi.json
 curl -fsS https://test-shop.komaroff-dev.ru/api/metrics
+curl -fsS https://test-shop.komaroff-dev.ru/docs/tutorial/
+curl -fsS https://test-shop.komaroff-dev.ru/docs/offline/
+curl -fsS https://test-shop.komaroff-dev.ru/docs/README.md
+curl -fsS https://test-shop.komaroff-dev.ru/docs/CODEMAP.md
 ```
 
 Workflow выполняет `pnpm test:production`, production Playwright и финальный reset автоматически. Команды из [TESTING.md](TESTING.md) остаются способом независимого повторного прогона. Простой health-check не доказывает выдачу или конкурентные инварианты.
@@ -115,4 +119,4 @@ docker compose --env-file .env.production -f compose.production.yaml logs --sinc
 
 ## Обновление документации
 
-Документация входит в repository/archive, но не раздаётся runtime-приложением. В image дополнительно копируются только два маленьких production acceptance-модуля: это позволяет запускать их одноразовым контейнером рядом с server-only token, не вынося секрет с VDS. Изменение только Markdown/offline handbook не меняет публичный UI; однако финальный submission SHA всё равно должен иметь зелёный CI и фиксироваться в ACCEPTANCE_REPORT.
+`docs/`, `README.md` и `CODEMAP.md` входят в immutable runtime image. NestJS раздаёт tutorial, автономный source handbook и Markdown-файлы с префиксом `/docs`; Angular-витрина содержит ссылку на этот комплект. Race, production black-box и Playwright требуют точные заголовки каждого материала, поэтому устаревшая или отсутствующая копия блокирует CI/deploy. Production acceptance-модули по-прежнему запускаются одноразовым контейнером рядом с server-only token, не вынося секрет с VDS.

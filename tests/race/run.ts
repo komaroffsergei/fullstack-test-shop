@@ -59,7 +59,19 @@ async function scenario(name: string, check: () => Promise<void>): Promise<void>
 /** Проверяет технические endpoints, полный OpenAPI, seed-каталог и fail-closed admin guard. */
 async function verifyContracts(): Promise<void> {
   await client.reset();
-  const [live, ready, catalog, openapi, metrics, docs, unauthorized] = await Promise.all([
+  const [
+    live,
+    ready,
+    catalog,
+    openapi,
+    metrics,
+    docs,
+    tutorial,
+    offline,
+    readme,
+    codemap,
+    unauthorized,
+  ] = await Promise.all([
     client.json<{ status: string }>('/api/health/live'),
     client.json<{ status: string }>('/api/health/ready'),
     client.json<Array<{ sku: string; priceMinor: number; currency: string }>>(
@@ -68,6 +80,10 @@ async function verifyContracts(): Promise<void> {
     client.json<{ paths?: Record<string, Record<string, unknown>> }>('/api/openapi.json'),
     client.text('/api/metrics'),
     client.text('/api/docs'),
+    client.text('/docs/tutorial/'),
+    client.text('/docs/offline/'),
+    client.text('/docs/README.md'),
+    client.text('/docs/CODEMAP.md'),
     client.json('/api/v1/admin/recovery/orders'),
   ]);
   assertCondition(live.status === 200 && live.body.status === 'ok', 'Liveness failed');
@@ -107,6 +123,18 @@ async function verifyContracts(): Promise<void> {
   assertCondition(
     docs.status === 200 && docs.body.includes('swagger-ui'),
     'Swagger UI is unavailable',
+  );
+  // Публичный домен и локальный стек должны раздавать один и тот же учебный комплект.
+  assertCondition(
+    tutorial.status === 200 &&
+      tutorial.body.includes('Fullstack Test Shop — интерактивный учебник') &&
+      offline.status === 200 &&
+      offline.body.includes('Исходный код, который можно изучать офлайн') &&
+      readme.status === 200 &&
+      readme.body.includes('# fullstack-test-shop') &&
+      codemap.status === 200 &&
+      codemap.body.includes('# CODEMAP: от требования к точной строке кода'),
+    'Public documentation bundle is unavailable or stale',
   );
   assertCondition(unauthorized.status === 401, 'Admin API is not fail-closed');
 

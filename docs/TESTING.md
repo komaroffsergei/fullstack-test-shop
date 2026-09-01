@@ -121,6 +121,7 @@ PLAYWRIGHT_EXTERNAL_SERVER=1 WEB_URL=http://127.0.0.1:4200 pnpm test:e2e
 
 Проверяется:
 
+- footer-ссылка и точное содержимое `/docs/tutorial/`, `/docs/offline/`, `/docs/README.md`, `/docs/CODEMAP.md`;
 - hero: обе стрелки, dots, active state и auto-advance;
 - catalog: open, клик внутри, outside close, повторная кнопка;
 - валюты ₸/₽ и active class;
@@ -159,7 +160,7 @@ pnpm test:production
 
 Suite проходит 9 black-box сценариев через публичный HTTPS:
 
-1. Angular page, TLS origin, health, catalog, OpenAPI, metrics, anonymous admin `401`;
+1. Angular page, публичный docs bundle, TLS origin, health, catalog, OpenAPI, metrics, anonymous admin `401`;
 2. double click/replay/conflict/money tamper;
 3. 50 identical + 50 unique webhook;
 4. early и unordered events;
@@ -180,6 +181,17 @@ pnpm test:e2e
 ```
 
 После браузерной покупки требуется ещё раз выполнить защищённый reset, чтобы оставить стенд в исходном состоянии. Deploy workflow делает это отдельным server-side шагом с `PRODUCTION_FINAL_RESET_ONLY=1` и одновременно требует пустой recovery list и зелёный readiness.
+
+Публичная документация проверяется теми же suites:
+
+```bash
+curl -fsS https://test-shop.komaroff-dev.ru/docs/tutorial/
+curl -fsS https://test-shop.komaroff-dev.ru/docs/offline/
+curl -fsS https://test-shop.komaroff-dev.ru/docs/README.md
+curl -fsS https://test-shop.komaroff-dev.ru/docs/CODEMAP.md
+```
+
+Недостаточно получить четыре `200`: тесты дополнительно ищут точные заголовки, чтобы SPA fallback не замаскировал отсутствующий файл.
 
 ## 7. OpenAPI и offline documentation gates
 
@@ -220,7 +232,7 @@ Verifier требует:
 8. полный OpenAPI check;
 9. 3 Playwright E2E;
 10. production Docker build;
-11. runtime dependency/Angular/Prisma/OpenSSL smoke;
+11. runtime dependency/Angular/docs/Prisma/OpenSSL smoke;
 12. независимый full-history gitleaks job.
 
 При любой ошибке CI прикладывает process logs, Playwright report и test-results. Deployment разрешается только после зелёного CI и использует immutable image по commit SHA.

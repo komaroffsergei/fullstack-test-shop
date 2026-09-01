@@ -441,6 +441,12 @@
 .mini-footer a {
   color: #333;
 }
+.mini-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 14px;
+}
 .sr-only {
   position: absolute;
   width: 1px;
@@ -521,5 +527,12 @@
   }
   .product-card:nth-child(n + 5) {
     display: none;
+  }
+  .mini-footer {
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .mini-footer nav {
+    justify-content: flex-end;
   }
 }

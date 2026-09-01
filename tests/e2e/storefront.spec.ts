@@ -17,6 +17,23 @@ test('five required interactions and purchase flow', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await expect(page.locator('.product-card')).toHaveCount(5);
 
+  // Публичная ссылка обязана вести к тому же учебнику/исходникам, которые опубликованы в GitHub.
+  await expect(page.getByRole('link', { name: 'Документация' })).toHaveAttribute('href', '/docs/');
+  const [tutorial, offline, readme, codemap] = await Promise.all([
+    page.request.get('/docs/tutorial/'),
+    page.request.get('/docs/offline/'),
+    page.request.get('/docs/README.md'),
+    page.request.get('/docs/CODEMAP.md'),
+  ]);
+  expect(tutorial.ok()).toBe(true);
+  expect(await tutorial.text()).toContain('Fullstack Test Shop — интерактивный учебник');
+  expect(offline.ok()).toBe(true);
+  expect(await offline.text()).toContain('Исходный код, который можно изучать офлайн');
+  expect(readme.ok()).toBe(true);
+  expect(await readme.text()).toContain('# fullstack-test-shop');
+  expect(codemap.ok()).toBe(true);
+  expect(await codemap.text()).toContain('# CODEMAP: от требования к точной строке кода');
+
   // №1: стрелки, точки, активное состояние и автоматическая смена карусели.
   const initialHeading = await page.getByRole('heading', { level: 1 }).innerText();
   await page.getByRole('button', { name: 'Следующий баннер' }).click();

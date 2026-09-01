@@ -97,14 +97,14 @@
 
 ## 7. Что требуется от кандидата в ответе
 
-| ID   | Deliverable (стр. 4)                      | Статус | Где находится                                                                                                                                                                      |
-| ---- | ----------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| D-01 | Ссылка на живую версию или README запуска | PASS   | [Production](https://test-shop.komaroff-dev.ru), [README](../README.md)                                                                                                            |
-| D-02 | Исходники GitHub или архив                | PASS   | [GitHub](https://github.com/komaroffsergei/fullstack-test-shop); чистый ZIP приложен к [release v1.1.0](https://github.com/komaroffsergei/fullstack-test-shop/releases/tag/v1.1.0) |
-| D-03 | Как воспроизвести гонки                   | PASS   | [TESTING.md](TESTING.md), `pnpm test:race`                                                                                                                                         |
-| D-04 | Пара строк о гарантии однократности       | PASS   | README «Почему код выдаётся ровно один раз», [ADR-002](adr/002-idempotency-and-inbox.md), [ADR-003](adr/003-provider-timeout.md)                                                   |
-| D-05 | Фактическое время                         | PASS   | [TIMELOG.md](TIMELOG.md) и README                                                                                                                                                  |
-| D-06 | Чистота кода и способность объяснить      | PASS   | Русские комментарии у методов/критических мест, [HTML-учебник](tutorial/index.html), [offline source](offline/index.html), [CODEMAP](../CODEMAP.md)                                |
+| ID   | Deliverable (стр. 4)                      | Статус | Где находится                                                                                                                                                                                                                                  |
+| ---- | ----------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D-01 | Ссылка на живую версию или README запуска | PASS   | [Production](https://test-shop.komaroff-dev.ru), [публичный учебник](https://test-shop.komaroff-dev.ru/docs/), [README](../README.md)                                                                                                          |
+| D-02 | Исходники GitHub или архив                | PASS   | [GitHub](https://github.com/komaroffsergei/fullstack-test-shop); чистый ZIP приложен к [release v1.1.1](https://github.com/komaroffsergei/fullstack-test-shop/releases/tag/v1.1.1)                                                             |
+| D-03 | Как воспроизвести гонки                   | PASS   | [TESTING.md](TESTING.md), `pnpm test:race`                                                                                                                                                                                                     |
+| D-04 | Пара строк о гарантии однократности       | PASS   | README «Почему код выдаётся ровно один раз», [ADR-002](adr/002-idempotency-and-inbox.md), [ADR-003](adr/003-provider-timeout.md)                                                                                                               |
+| D-05 | Фактическое время                         | PASS   | [TIMELOG.md](TIMELOG.md) и README                                                                                                                                                                                                              |
+| D-06 | Чистота кода и способность объяснить      | PASS   | Русские комментарии у методов/критических мест, [HTML-учебник](tutorial/index.html), [offline source](offline/index.html), [CODEMAP](../CODEMAP.md); те же материалы доступны на [production `/docs`](https://test-shop.komaroff-dev.ru/docs/) |
 
 ## 8. Прямо разрешённые исключения
 

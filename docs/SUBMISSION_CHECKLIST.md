@@ -8,8 +8,9 @@
 - Живой стенд: `https://test-shop.komaroff-dev.ru`
 - Swagger: `https://test-shop.komaroff-dev.ru/api/docs`
 - Health: `https://test-shop.komaroff-dev.ru/api/health/ready`
-- Основной учебник: `docs/tutorial/index.html`
-- Автономный учебник с исходниками: `docs/offline/index.html`
+- Основной учебник: `https://test-shop.komaroff-dev.ru/docs/`
+- Автономный учебник с исходниками: `https://test-shop.komaroff-dev.ru/docs/offline/`
+- README/CODEMAP на том же production SHA: `https://test-shop.komaroff-dev.ru/docs/README.md` и `https://test-shop.komaroff-dev.ru/docs/CODEMAP.md`
 - Точный отчёт приемки: `docs/ACCEPTANCE_REPORT.md`
 
 Admin token не отправляется в публичной ссылке, issue, README или архиве. Если проверяющему нужен admin flow, токен передаётся отдельным приватным каналом.
@@ -102,7 +103,7 @@ gh repo view komaroffsergei/fullstack-test-shop --json visibility,url
 
 ```bash
 mkdir -p release
-git archive --format=zip --output=release/fullstack-test-shop-v1.1.0.zip HEAD
+git archive --format=zip --output=release/fullstack-test-shop-v1.1.1.zip HEAD
 ```
 
 `git archive` берёт только committed файлы, поэтому автоматически не включает `.git`, локальный `.env`, `node_modules`, volumes, `dist`, `.angular`, Playwright traces и build cache. Перед отправкой проверьте список архива и отсутствие secret names.
