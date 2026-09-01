@@ -74,12 +74,24 @@ test('all visible storefront images load successfully', async ({ page }) => {
   const browserErrors = trackBrowserErrors(page);
   await page.goto('/');
   await expect(page.locator('.product-card')).toHaveCount(5);
-  const images = await page.locator('img').evaluateAll((elements) =>
-    elements.map((element) => {
-      const image = element as HTMLImageElement;
-      return { src: image.currentSrc, complete: image.complete, width: image.naturalWidth };
-    }),
-  );
+  const readImages = () =>
+    page.locator('img').evaluateAll((elements) =>
+      elements.map((element) => {
+        const image = element as HTMLImageElement;
+        return { src: image.currentSrc, complete: image.complete, width: image.naturalWidth };
+      }),
+    );
+  // DOM появляется раньше сетевых PNG на удалённом HTTPS, поэтому ждём свойства самих изображений.
+  await expect
+    .poll(
+      async () =>
+        (await readImages())
+          .filter((image) => !image.complete || image.width === 0)
+          .map((image) => image.src),
+      { timeout: 10_000, message: 'Все storefront assets должны завершить загрузку' },
+    )
+    .toEqual([]);
+  const images = await readImages();
   expect(images.length).toBeGreaterThanOrEqual(15);
   expect(images.every((image) => image.complete && image.width > 0)).toBe(true);
   expect(browserErrors()).toEqual([]);

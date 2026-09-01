@@ -129,7 +129,7 @@ PLAYWRIGHT_EXTERNAL_SERVER=1 WEB_URL=http://127.0.0.1:4200 pnpm test:e2e
 - настоящий double click «Купить»;
 - переход на UUID заказа, simulator paid и один code;
 - ровно один `delivered` в UI history;
-- все 15 видимых PNG имеют `complete=true` и `naturalWidth>0`;
+- все 15 видимых PNG в пределах 10 секунд получают `complete=true` и `naturalWidth>0`; проверка ждёт сетевые свойства, а не только готовность DOM;
 - viewport 390×844 с открытым catalog не имеет horizontal overflow;
 - нет `console.error` и необработанных `pageerror`.
 
