@@ -10,7 +10,8 @@
 | 2026-08-31 22:10 — 2026-09-01 00:10 | race/E2E/CI, Docker и документация                                                                                                |
 | 2026-09-01 00:10 — 01:57            | DNS, VDS, TLS, immutable deploy и production QA                                                                                   |
 | 2026-09-01 11:35 — 14:12            | полная повторная приёмка, hardening тестов, комментарии, offline source handbook, production black-box, отчёт и release preflight |
+| 2026-09-01 14:12 — 14:55            | публикация учебника/исходников на домене, docs contract tests, полный локальный/CI/deploy gate и независимая Browser QA           |
 
-Итог рабочих сессий: **16 ч 48 мин elapsed**. Время включает ожидание установки зависимостей, сборок GitHub Actions, загрузки Docker-слоёв и выпуска TLS-сертификата.
+Итог рабочих сессий: **17 ч 31 мин elapsed**. Время включает ожидание установки зависимостей, сборок GitHub Actions, загрузки Docker-слоёв и выпуска TLS-сертификата.
 
-Первый production smoke-test завершён 2026-09-01 в 01:57 (Europe/Moscow). Финальная расширенная приёмка завершена 2026-09-01 в 14:12: 13/13 локальных race, 9/9 production black-box, 3/3 production Playwright, health/OpenAPI/assets/desktop/mobile QA и детерминированный reset.
+Первый production smoke-test завершён 2026-09-01 в 01:57 (Europe/Moscow). Финальная расширенная приёмка runtime и публичной документации завершена 2026-09-01 в 14:55: 13/13 локальных race, 9/9 production black-box, 3/3 production Playwright, health/OpenAPI/assets/desktop/mobile/docs QA и детерминированный reset.

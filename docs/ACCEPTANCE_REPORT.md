@@ -34,11 +34,11 @@
 | База тестов         | настоящий PostgreSQL 17 в Docker                                                                                        |
 | Браузер             | Chromium через Playwright и отдельная сессия Browser QA                                                                 |
 | Часовой пояс отчёта | Europe/Moscow                                                                                                           |
-| Проверенный runtime | [`b83fadf85c55`](https://github.com/komaroffsergei/fullstack-test-shop/commit/b83fadf85c55fbb249edb95094f4567f24b37fbb) |
-| Финальный CI        | [`33499836115`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33499836115), `success`              |
-| Production deploy   | [`33500223414`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33500223414), `success`              |
+| Проверенный runtime | [`7e9daeb15095`](https://github.com/komaroffsergei/fullstack-test-shop/commit/7e9daeb150950d51f52493606c60c7dcdc4baac2) |
+| Финальный CI        | [`33503939960`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33503939960), `success`              |
+| Production deploy   | [`33504299670`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33504299670), `success`              |
 
-Runtime-код в последующем documentation/release commit не меняется: он только фиксирует этот отчёт, обновляет автономный handbook и прикладывает архив. Секреты, admin token и выданные ключи в отчёт и test artifacts не записываются.
+Runtime-код в последующем documentation/release commit не меняется: он только фиксирует этот отчёт, обновляет автономный handbook и прикладывает архив. Секреты, admin token и выданные ключи в отчёт и test artifacts не записываются. Публичные `/docs` входят в тот же immutable image, поэтому Markdown и HTML на домене соответствуют исходникам проверенного SHA.
 
 ## 3. Статические и сборочные барьеры
 
@@ -74,19 +74,19 @@ pnpm test:race
 
 |   № | Сценарий                                               |   Время | Фактический результат |
 | --: | ------------------------------------------------------ | ------: | --------------------- |
-|   1 | contracts, seed, health, metrics, admin protection     | 4360 ms | PASS                  |
-|   2 | double click, idempotency conflict, server-owned price | 2296 ms | PASS                  |
-|   3 | 50 одинаковых webhook + strict replay no-op            | 2910 ms | PASS                  |
-|   4 | 50 разных `paid`: одна job, fulfillment и key          | 2255 ms | PASS                  |
-|   5 | ранние и неупорядоченные события без регрессии         | 1186 ms | PASS                  |
-|   6 | проверка snapshot суммы и валюты                       |  421 ms | PASS                  |
-|   7 | payment simulator делает настоящий webhook             |  314 ms | PASS                  |
-|   8 | пустые пулы, admin recovery, concurrent retry          | 3680 ms | PASS                  |
-|   9 | timeout-after-issue: тот же A request, без B           | 1723 ms | PASS                  |
-|  10 | явный out-of-stock A безопасно переключает на B        |  455 ms | PASS                  |
-|  11 | оба provider дают 5xx, stable-ID recovery              |  718 ms | PASS                  |
-|  12 | quote, replay и LIMIT3 под 50 запросами                |  531 ms | PASS                  |
-|  13 | deterministic reset и запрет при processing job        | 2304 ms | PASS                  |
+|   1 | contracts, seed, health, metrics, admin protection     | 2279 ms | PASS                  |
+|   2 | double click, idempotency conflict, server-owned price | 2303 ms | PASS                  |
+|   3 | 50 одинаковых webhook + strict replay no-op            | 5232 ms | PASS                  |
+|   4 | 50 разных `paid`: одна job, fulfillment и key          |  373 ms | PASS                  |
+|   5 | ранние и неупорядоченные события без регрессии         | 1457 ms | PASS                  |
+|   6 | проверка snapshot суммы и валюты                       |  204 ms | PASS                  |
+|   7 | payment simulator делает настоящий webhook             |  517 ms | PASS                  |
+|   8 | пустые пулы, admin recovery, concurrent retry          | 2859 ms | PASS                  |
+|   9 | timeout-after-issue: тот же A request, без B           | 1785 ms | PASS                  |
+|  10 | явный out-of-stock A безопасно переключает на B        |  473 ms | PASS                  |
+|  11 | оба provider дают 5xx, stable-ID recovery              |  751 ms | PASS                  |
+|  12 | quote, replay и LIMIT3 под 50 запросами                | 2330 ms | PASS                  |
+|  13 | deterministic reset и запрет при processing job        | 2231 ms | PASS                  |
 
 ### Прямое соответствие пяти критериям работодателя
 
@@ -108,11 +108,11 @@ pnpm test:e2e
 
 Итог: **3/3 PASS**.
 
-| Playwright test                                 |  Время | Что проверено                                                                                                                    |
-| ----------------------------------------------- | -----: | -------------------------------------------------------------------------------------------------------------------------------- |
-| five required interactions and purchase flow    |  7.8 s | стрелки/dots/auto carousel, catalog/outside, currency, services hover, cards hover, double click, оплата, `delivered`, один code |
-| all visible storefront images load successfully | 638 ms | 15/15 видимых изображений загружены с ненулевым размером                                                                         |
-| narrow viewport does not overflow horizontally  | 633 ms | 390×844, открытый каталог, нет horizontal overflow, console/page errors                                                          |
+| Playwright test                                 |  Время | Что проверено                                                                                                                                           |
+| ----------------------------------------------- | -----: | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| five required interactions and purchase flow    | 10.1 s | стрелки/dots/auto carousel, catalog/outside, currency, services hover, cards hover, double click, оплата, `delivered`, один code; весь `/docs` комплект |
+| all visible storefront images load successfully | 663 ms | 15/15 видимых изображений загружены с ненулевым размером                                                                                                |
+| narrow viewport does not overflow horizontally  | 642 ms | 390×844, открытый каталог, нет horizontal overflow, console/page errors                                                                                 |
 
 ## 6. Найденные проблемы и исправления
 
@@ -132,31 +132,35 @@ pnpm test:e2e
 
 Первый production Playwright deploy `33499241450` прошёл 9/9 server-side black-box и два браузерных теста, но image-тест дважды прочитал DOM раньше завершения сетевой загрузки PNG. Browser QA показал: сразу после `DOMContentLoaded` часть `img.complete=false`, через 3 секунды все 15/15 имеют ненулевой `naturalWidth`; HTTP-ресурсы не были сломаны. Тест исправлен на `expect.poll` свойств самих изображений с timeout 10 секунд и теперь отличает медленную сеть от настоящего broken asset. Даже при этом падении обязательный `always()` reset завершился успешно.
 
+### Публичная документация и readiness локального E2E
+
+Учебник и автономный source handbook существовали в Git, но не входили в production runtime, поэтому домен не мог отдать их. Docker image теперь явно содержит `docs`, `README.md` и `CODEMAP.md`; NestJS публикует единый `/docs`, а Angular footer ведёт на него. Локальный Playwright первоначально видел уже готовый Vite раньше NestJS, из-за чего каталог мог кратко показать ошибку. `webServer.url` заменён на `/api/health/ready` через Angular proxy: тест начинается только когда одновременно готовы frontend, API и PostgreSQL. Локальный Docker smoke и production scenario 1 проверяют точное содержимое всех четырёх публичных документов.
+
 ## 7. Публичная HTTPS-приёмка
 
-Immutable-образ commit `b83fadf85c55` развёрнут workflow [`33500223414`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33500223414). Один и тот же job собрал и отправил образ в GHCR, применил миграции, дождался readiness, выполнил server-side black-box внутри production-сети, затем проверил публичный домен отдельным Chromium и в `always()`-шаге восстановил seed. Все шаги job завершились `success` за 5 мин 37 с.
+Immutable-образ commit `7e9daeb15095` развёрнут workflow [`33504299670`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33504299670). Один и тот же job собрал и отправил образ в GHCR, применил миграции, дождался readiness, выполнил server-side black-box внутри production-сети, затем проверил публичный домен отдельным Chromium и в `always()`-шаге восстановил seed. Все шаги job завершились `success` за 5 мин 10 с.
 
 ### 7.1. Server-side black-box через настоящий HTTPS
 
 Команда `pnpm test:production` обращалась к `https://test-shop.komaroff-dev.ru`, а не к локальному API. Admin token подставлялся только на VDS и не передавался runner, в логи или artifacts.
 
-|   № | Production-сценарий                                               |   Время | Результат |
-| --: | ----------------------------------------------------------------- | ------: | --------- |
-|   1 | HTTPS surface, live/ready, catalog, OpenAPI, metrics, admin guard |  492 ms | PASS      |
-|   2 | idempotent double click, payload conflict, money tamper           |  192 ms | PASS      |
-|   3 | 50 одинаковых + 50 разных paid webhook                            | 2028 ms | PASS      |
-|   4 | ранние и неупорядоченные payment events                           | 1713 ms | PASS      |
-|   5 | оба пула пусты, пополнение, два concurrent retry                  |  990 ms | PASS      |
-|   6 | timeout-after-issue и безопасный replay                           | 1815 ms | PASS      |
-|   7 | явный out-of-stock A и fallback на B                              |  317 ms | PASS      |
-|   8 | два ответа 5xx и последующее восстановление                       |  729 ms | PASS      |
-|   9 | `LIMIT3` под 50 параллельными production-запросами                |  671 ms | PASS      |
+|   № | Production-сценарий                                                    |   Время | Результат |
+| --: | ---------------------------------------------------------------------- | ------: | --------- |
+|   1 | HTTPS surface/docs, live/ready, catalog, OpenAPI, metrics, admin guard |  512 ms | PASS      |
+|   2 | idempotent double click, payload conflict, money tamper                |  151 ms | PASS      |
+|   3 | 50 одинаковых + 50 разных paid webhook                                 | 1620 ms | PASS      |
+|   4 | ранние и неупорядоченные payment events                                | 1663 ms | PASS      |
+|   5 | оба пула пусты, пополнение, два concurrent retry                       | 1012 ms | PASS      |
+|   6 | timeout-after-issue и безопасный replay                                | 1607 ms | PASS      |
+|   7 | явный out-of-stock A и fallback на B                                   |  421 ms | PASS      |
+|   8 | два ответа 5xx и последующее восстановление                            |  711 ms | PASS      |
+|   9 | `LIMIT3` под 50 параллельными production-запросами                     |  568 ms | PASS      |
 
 Итог, напечатанный самим runner: **`Production acceptance complete: 9/9 scenarios passed.`**
 
 ### 7.2. Production Playwright
 
-Три теста из `tests/e2e/storefront.spec.ts` были повторены отдельным Chromium с `PLAYWRIGHT_EXTERNAL_SERVER=1` на публичном URL. Итог workflow: **3/3 PASS за 17,0 с**.
+Три теста из `tests/e2e/storefront.spec.ts` были повторены отдельным Chromium с `PLAYWRIGHT_EXTERNAL_SERVER=1` на публичном URL. Итог workflow: **3/3 PASS за 17,1 с**.
 
 - пять обязательных интерактивов, двойной клик, настоящий путь оплаты, polling до `delivered`, один видимый код;
 - ожидание сетевой готовности всех 15 изображений через `expect.poll`;
@@ -168,11 +172,12 @@ Immutable-образ commit `b83fadf85c55` развёрнут workflow [`3350022
 
 - `GG Shop — цифровые товары`, 5 карточек и 15/15 загруженных изображений;
 - desktop `clientWidth = scrollWidth = 1905`, горизонтального overflow нет;
-- стрелка карусели изменила заголовок слайда;
-- каталог получил `aria-expanded=true`, показал четыре пункта и закрылся кликом снаружи;
-- после нажатия `₽` ровно эта кнопка получила класс `active`;
-- журнал браузера пуст: 0 console/network ошибок;
-- hover сервисов/карточек и mobile `390×844` подтверждены production Playwright, потому что встроенный browser controller не предоставляет достоверную pointer/viewport-эмуляцию для этих двух проверок.
+- footer содержит рабочие `/docs/` и `/docs/offline/`; переход по «Документация» завершился на `/docs/tutorial/`;
+- tutorial имеет правильный title, 58 прямых ссылок на GitHub, 17 question/details-блоков и реально переключает `pro`/`kid` объяснения;
+- offline handbook показывает **105** раскрываемых файлов, поиск, SHA-256 и точные номера строк;
+- публичные README и CODEMAP вернули `200` и содержат актуальные `v1.1.1`/`race main:547`;
+- журнал браузера пуст: 0 console warning/error;
+- стрелки/каталог/валюта/hover/mobile `390×844` дополнительно подтверждены production Playwright.
 
 Дополнительный read-only HTTPS smoke после reset получил: корень `200`, `live=ok`, `ready=ok`, 12 товаров, 14 OpenAPI paths.
 
@@ -194,4 +199,4 @@ Immutable-образ commit `b83fadf85c55` развёрнут workflow [`3350022
 
 ## 10. Вердикт
 
-**READY FOR SUBMISSION.** Подтверждены: **13/13 локальных race-сценариев, 9/9 production black-box, 3/3 локальных и 3/3 production Playwright, 9/9 unit/component, 156/156 русских комментариев, 105 exact offline source files, зелёный CI, Docker runtime smoke, immutable deploy и финальный reset**.
+**READY FOR SUBMISSION.** Подтверждены: **13/13 локальных race-сценариев, 9/9 production black-box, 3/3 локальных и 3/3 production Playwright, 9/9 unit/component, 156/156 русских комментариев, 105 exact offline source files, публичный tutorial/offline/README/CODEMAP, зелёный CI, Docker runtime smoke, immutable deploy и финальный reset**.

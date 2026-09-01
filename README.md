@@ -264,15 +264,16 @@ pnpm test:production
 
 ## Подтверждённая приёмка
 
-Проверенный runtime commit [`b83fadf85c55`](https://github.com/komaroffsergei/fullstack-test-shop/commit/b83fadf85c55fbb249edb95094f4567f24b37fbb) и release commit [`5fa98eb06d1a`](https://github.com/komaroffsergei/fullstack-test-shop/commit/5fa98eb06d1af9cfe406454b43feff36a37aa4cf) прошли:
+Проверенный runtime commit [`7e9daeb15095`](https://github.com/komaroffsergei/fullstack-test-shop/commit/7e9daeb150950d51f52493606c60c7dcdc4baac2) прошёл:
 
-- [CI release-дерева `33501369507`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33501369507) — `success`;
-- [production deploy `33500223414`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33500223414) — `success`, immutable GHCR-образ;
+- [CI `33503939960`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33503939960) — `success`;
+- [production deploy `33504299670`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33504299670) — `success`, immutable GHCR-образ;
 - 13/13 локальных PostgreSQL race-сценариев;
 - 9/9 black-box сценариев через настоящий `https://test-shop.komaroff-dev.ru`;
 - 3/3 локальных и 3/3 production Playwright-тестов;
 - 156/156 методов и функций с ведущими русскими комментариями;
 - 105/105 исходных файлов в автономном HTML;
+- tutorial, offline handbook, README и CODEMAP доступны на production `/docs` и проверены по точному содержимому;
 - финальный demo reset: `recovery=0`, `ready=ok`.
 
 Точные assertions, найденные дефекты и исправления: [docs/ACCEPTANCE_REPORT.md](docs/ACCEPTANCE_REPORT.md). Более глубокое объяснение каждого теста: [docs/TESTING.md](docs/TESTING.md). Полная связь `пункт ТЗ → код → тест → ручная проверка`: [docs/REQUIREMENTS_MATRIX.md](docs/REQUIREMENTS_MATRIX.md).

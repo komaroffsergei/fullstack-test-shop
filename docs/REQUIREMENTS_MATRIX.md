@@ -124,6 +124,6 @@
 - Ключевой этап 2: **PASS**.
 - Бонусный этап 3: **PASS**.
 - Бонусный этап 4: **PASS**.
-- Production black-box: **9/9 PASS** на публичном HTTPS в deploy [`33500223414`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33500223414); результат формируется без секретов.
+- Production black-box: **9/9 PASS** на публичном HTTPS в deploy [`33504299670`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33504299670); scenario 1 дополнительно проверяет точный tutorial/offline/README/CODEMAP, результат формируется без секретов.
 - Production Playwright: **3/3 PASS**; финальный reset: `recovery=0`, `ready=ok`.
 - Точные времена, исправления и ссылки на CI/deploy зафиксированы в [ACCEPTANCE_REPORT.md](ACCEPTANCE_REPORT.md).

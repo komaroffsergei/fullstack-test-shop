@@ -140,7 +140,7 @@ git archive --format=zip --output=release/fullstack-test-shop-v1.1.1.zip HEAD
 - [x] 13/13 локальных acceptance scenarios зелёные;
 - [x] 9/9 production black-box scenarios зелёные;
 - [x] 3/3 production Playwright tests зелёные;
-- [x] CI [`33499836115`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33499836115) и deploy [`33500223414`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33500223414) runtime-SHA зелёные;
+- [x] CI [`33503939960`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33503939960) и deploy [`33504299670`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33504299670) runtime-SHA зелёные;
 - [x] public health отвечает `200`;
 - [x] demo seed восстановлен: `recovery=0`, `ready=ok`;
 - [x] offline handbook актуален: 105/105 exact source files;
