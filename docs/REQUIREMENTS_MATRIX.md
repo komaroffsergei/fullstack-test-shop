@@ -97,14 +97,14 @@
 
 ## 7. Что требуется от кандидата в ответе
 
-| ID   | Deliverable (стр. 4)                      | Статус | Где находится                                                                                                                                       |
-| ---- | ----------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| D-01 | Ссылка на живую версию или README запуска | PASS   | [Production](https://test-shop.komaroff-dev.ru), [README](../README.md)                                                                             |
-| D-02 | Исходники GitHub или архив                | PASS   | [GitHub](https://github.com/komaroffsergei/fullstack-test-shop); submission archive создаётся по [чек-листу](SUBMISSION_CHECKLIST.md)               |
-| D-03 | Как воспроизвести гонки                   | PASS   | [TESTING.md](TESTING.md), `pnpm test:race`                                                                                                          |
-| D-04 | Пара строк о гарантии однократности       | PASS   | README «Почему код выдаётся ровно один раз», [ADR-002](adr/002-idempotency-and-inbox.md), [ADR-003](adr/003-provider-timeout.md)                    |
-| D-05 | Фактическое время                         | PASS   | [TIMELOG.md](TIMELOG.md) и README                                                                                                                   |
-| D-06 | Чистота кода и способность объяснить      | PASS   | Русские комментарии у методов/критических мест, [HTML-учебник](tutorial/index.html), [offline source](offline/index.html), [CODEMAP](../CODEMAP.md) |
+| ID   | Deliverable (стр. 4)                      | Статус | Где находится                                                                                                                                                                      |
+| ---- | ----------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D-01 | Ссылка на живую версию или README запуска | PASS   | [Production](https://test-shop.komaroff-dev.ru), [README](../README.md)                                                                                                            |
+| D-02 | Исходники GitHub или архив                | PASS   | [GitHub](https://github.com/komaroffsergei/fullstack-test-shop); чистый ZIP приложен к [release v1.1.0](https://github.com/komaroffsergei/fullstack-test-shop/releases/tag/v1.1.0) |
+| D-03 | Как воспроизвести гонки                   | PASS   | [TESTING.md](TESTING.md), `pnpm test:race`                                                                                                                                         |
+| D-04 | Пара строк о гарантии однократности       | PASS   | README «Почему код выдаётся ровно один раз», [ADR-002](adr/002-idempotency-and-inbox.md), [ADR-003](adr/003-provider-timeout.md)                                                   |
+| D-05 | Фактическое время                         | PASS   | [TIMELOG.md](TIMELOG.md) и README                                                                                                                                                  |
+| D-06 | Чистота кода и способность объяснить      | PASS   | Русские комментарии у методов/критических мест, [HTML-учебник](tutorial/index.html), [offline source](offline/index.html), [CODEMAP](../CODEMAP.md)                                |
 
 ## 8. Прямо разрешённые исключения
 
@@ -124,5 +124,6 @@
 - Ключевой этап 2: **PASS**.
 - Бонусный этап 3: **PASS**.
 - Бонусный этап 4: **PASS**.
-- Production black-box: выполняется `pnpm test:production` с явным разрешением reset и отдельным server token; результат сохраняется без секретов в `test-results/acceptance-production.json`.
-- Текущие фактические прогоны и ссылки на CI/deploy фиксируются в [ACCEPTANCE_REPORT.md](ACCEPTANCE_REPORT.md).
+- Production black-box: **9/9 PASS** на публичном HTTPS в deploy [`33500223414`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33500223414); результат формируется без секретов.
+- Production Playwright: **3/3 PASS**; финальный reset: `recovery=0`, `ready=ok`.
+- Точные времена, исправления и ссылки на CI/deploy зафиксированы в [ACCEPTANCE_REPORT.md](ACCEPTANCE_REPORT.md).

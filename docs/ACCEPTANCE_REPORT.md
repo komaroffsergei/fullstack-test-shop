@@ -24,18 +24,21 @@
 
 ## 2. Проверяемый кандидат
 
-| Поле                | Значение                                                |
-| ------------------- | ------------------------------------------------------- |
-| Репозиторий         | `https://github.com/komaroffsergei/fullstack-test-shop` |
-| Ветка               | `main`                                                  |
-| Публичный стенд     | `https://test-shop.komaroff-dev.ru`                     |
-| Локальная ОС        | Windows, PowerShell                                     |
-| Runtime             | Node.js 22.22.2, pnpm 11.7.0                            |
-| База тестов         | настоящий PostgreSQL 17 в Docker                        |
-| Браузер             | Chromium через Playwright и отдельная сессия Browser QA |
-| Часовой пояс отчёта | Europe/Moscow                                           |
+| Поле                | Значение                                                                                                                |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Репозиторий         | `https://github.com/komaroffsergei/fullstack-test-shop`                                                                 |
+| Ветка               | `main`                                                                                                                  |
+| Публичный стенд     | `https://test-shop.komaroff-dev.ru`                                                                                     |
+| Локальная ОС        | Windows, PowerShell                                                                                                     |
+| Runtime             | Node.js 22.22.2, pnpm 11.7.0                                                                                            |
+| База тестов         | настоящий PostgreSQL 17 в Docker                                                                                        |
+| Браузер             | Chromium через Playwright и отдельная сессия Browser QA                                                                 |
+| Часовой пояс отчёта | Europe/Moscow                                                                                                           |
+| Проверенный runtime | [`b83fadf85c55`](https://github.com/komaroffsergei/fullstack-test-shop/commit/b83fadf85c55fbb249edb95094f4567f24b37fbb) |
+| Финальный CI        | [`33499836115`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33499836115), `success`              |
+| Production deploy   | [`33500223414`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33500223414), `success`              |
 
-Точный SHA, CI run и deploy run дописываются после публикации финального дерева. Секреты, admin token и выданные ключи в отчёт и test artifacts не записываются.
+Runtime-код в последующем documentation/release commit не меняется: он только фиксирует этот отчёт, обновляет автономный handbook и прикладывает архив. Секреты, admin token и выданные ключи в отчёт и test artifacts не записываются.
 
 ## 3. Статические и сборочные барьеры
 
@@ -131,7 +134,47 @@ pnpm test:e2e
 
 ## 7. Публичная HTTPS-приёмка
 
-Финальные фактические результаты `pnpm test:production`, production Playwright, ручной Browser QA, CI/deploy identifiers и SHA будут записаны в этот раздел сразу после развёртывания кандидата. До этого момента раздел намеренно не объявляется зелёным.
+Immutable-образ commit `b83fadf85c55` развёрнут workflow [`33500223414`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33500223414). Один и тот же job собрал и отправил образ в GHCR, применил миграции, дождался readiness, выполнил server-side black-box внутри production-сети, затем проверил публичный домен отдельным Chromium и в `always()`-шаге восстановил seed. Все шаги job завершились `success` за 5 мин 37 с.
+
+### 7.1. Server-side black-box через настоящий HTTPS
+
+Команда `pnpm test:production` обращалась к `https://test-shop.komaroff-dev.ru`, а не к локальному API. Admin token подставлялся только на VDS и не передавался runner, в логи или artifacts.
+
+|   № | Production-сценарий                                               |   Время | Результат |
+| --: | ----------------------------------------------------------------- | ------: | --------- |
+|   1 | HTTPS surface, live/ready, catalog, OpenAPI, metrics, admin guard |  492 ms | PASS      |
+|   2 | idempotent double click, payload conflict, money tamper           |  192 ms | PASS      |
+|   3 | 50 одинаковых + 50 разных paid webhook                            | 2028 ms | PASS      |
+|   4 | ранние и неупорядоченные payment events                           | 1713 ms | PASS      |
+|   5 | оба пула пусты, пополнение, два concurrent retry                  |  990 ms | PASS      |
+|   6 | timeout-after-issue и безопасный replay                           | 1815 ms | PASS      |
+|   7 | явный out-of-stock A и fallback на B                              |  317 ms | PASS      |
+|   8 | два ответа 5xx и последующее восстановление                       |  729 ms | PASS      |
+|   9 | `LIMIT3` под 50 параллельными production-запросами                |  671 ms | PASS      |
+
+Итог, напечатанный самим runner: **`Production acceptance complete: 9/9 scenarios passed.`**
+
+### 7.2. Production Playwright
+
+Три теста из `tests/e2e/storefront.spec.ts` были повторены отдельным Chromium с `PLAYWRIGHT_EXTERNAL_SERVER=1` на публичном URL. Итог workflow: **3/3 PASS за 17,0 с**.
+
+- пять обязательных интерактивов, двойной клик, настоящий путь оплаты, polling до `delivered`, один видимый код;
+- ожидание сетевой готовности всех 15 изображений через `expect.poll`;
+- viewport `390×844`, открытое меню каталога, `scrollWidth ≤ clientWidth`, отсутствие `console.error` и `pageerror`.
+
+### 7.3. Независимая ручная Browser QA
+
+После успешного deploy публичная страница повторно открыта в отдельной браузерной сессии:
+
+- `GG Shop — цифровые товары`, 5 карточек и 15/15 загруженных изображений;
+- desktop `clientWidth = scrollWidth = 1905`, горизонтального overflow нет;
+- стрелка карусели изменила заголовок слайда;
+- каталог получил `aria-expanded=true`, показал четыре пункта и закрылся кликом снаружи;
+- после нажатия `₽` ровно эта кнопка получила класс `active`;
+- журнал браузера пуст: 0 console/network ошибок;
+- hover сервисов/карточек и mobile `390×844` подтверждены production Playwright, потому что встроенный browser controller не предоставляет достоверную pointer/viewport-эмуляцию для этих двух проверок.
+
+Дополнительный read-only HTTPS smoke после reset получил: корень `200`, `live=ok`, `ready=ok`, 12 товаров, 14 OpenAPI paths.
 
 ## 8. Финальное состояние данных
 
@@ -143,7 +186,7 @@ pnpm test:e2e
 - обнуляет счётчики промокодов;
 - отказывается работать, если выдача уже `processing`.
 
-После последнего production Browser-пути reset выполняется ещё раз, а recovery list и health проверяются повторно. Поэтому проверяющий получает чистый воспроизводимый стенд.
+Финальный workflow-шаг после production Playwright выполнил reset ещё раз и напечатал: **`Production demo reset verified: recovery=0, ready=ok.`** Ручная проверка после него использовала только GET/UI-интерактивы без покупки. Поэтому проверяющий получает чистый воспроизводимый стенд.
 
 ## 9. Осознанные исключения
 
@@ -151,4 +194,4 @@ pnpm test:e2e
 
 ## 10. Вердикт
 
-Локальная часть готова: **13/13 race, 3/3 Playwright, 9/9 unit/component, 156/156 comments, 105 exact offline source files, build/image smoke PASS**. Финальный вердикт `READY FOR SUBMISSION` будет выставлен только после зелёного CI, immutable deploy того же SHA, 9/9 black-box HTTPS, 3/3 production Playwright и финального reset.
+**READY FOR SUBMISSION.** Подтверждены: **13/13 локальных race-сценариев, 9/9 production black-box, 3/3 локальных и 3/3 production Playwright, 9/9 unit/component, 156/156 русских комментариев, 105 exact offline source files, зелёный CI, Docker runtime smoke, immutable deploy и финальный reset**.

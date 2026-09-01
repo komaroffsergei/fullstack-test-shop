@@ -102,7 +102,7 @@ gh repo view komaroffsergei/fullstack-test-shop --json visibility,url
 
 ```bash
 mkdir -p release
-git archive --format=zip --output=release/fullstack-test-shop-v1.0.0.zip HEAD
+git archive --format=zip --output=release/fullstack-test-shop-v1.1.0.zip HEAD
 ```
 
 `git archive` берёт только committed файлы, поэтому автоматически не включает `.git`, локальный `.env`, `node_modules`, volumes, `dist`, `.angular`, Playwright traces и build cache. Перед отправкой проверьте список архива и отсутствие secret names.
@@ -135,14 +135,14 @@ git archive --format=zip --output=release/fullstack-test-shop-v1.0.0.zip HEAD
 
 Задание готово к отправке, только если одновременно верны все утверждения:
 
-- [ ] 5/5 первичных критериев ТЗ имеют автоматическое доказательство;
-- [ ] 13/13 локальных acceptance scenarios зелёные;
-- [ ] 9/9 production black-box scenarios зелёные;
-- [ ] 3/3 production Playwright tests зелёные;
-- [ ] CI и deploy финального SHA зелёные;
-- [ ] public health отвечает `200`;
-- [ ] demo seed восстановлен;
-- [ ] offline handbook актуален и проходит verifier;
-- [ ] отчет содержит фактические, а не планируемые результаты;
-- [ ] архив не содержит секретов и generated cache;
-- [ ] admin token передаётся только отдельно.
+- [x] 5/5 первичных критериев ТЗ имеют автоматическое доказательство;
+- [x] 13/13 локальных acceptance scenarios зелёные;
+- [x] 9/9 production black-box scenarios зелёные;
+- [x] 3/3 production Playwright tests зелёные;
+- [x] CI [`33499836115`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33499836115) и deploy [`33500223414`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33500223414) runtime-SHA зелёные;
+- [x] public health отвечает `200`;
+- [x] demo seed восстановлен: `recovery=0`, `ready=ok`;
+- [x] offline handbook актуален: 105/105 exact source files;
+- [x] отчёт содержит фактические, а не планируемые результаты;
+- [x] ZIP создан через `git archive`, список проверен, секретов и generated cache нет;
+- [x] admin token остаётся только на VDS и передаётся отдельно.

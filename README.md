@@ -8,6 +8,7 @@
 - Выдача: отдельный worker и две HTTP-заглушки поставщиков.
 - Production URL: [test-shop.komaroff-dev.ru](https://test-shop.komaroff-dev.ru)
 - API docs: [test-shop.komaroff-dev.ru/api/docs](https://test-shop.komaroff-dev.ru/api/docs)
+- Offline release: [v1.1.0 с чистым ZIP](https://github.com/komaroffsergei/fullstack-test-shop/releases/tag/v1.1.0)
 - CI: format, typed lint, strict typecheck (workspace + root), unit, 13-scenario race, E2E, OpenAPI, offline-doc verification, Docker runtime smoke и gitleaks.
 
 ## Быстрый запуск
@@ -73,6 +74,20 @@ pnpm test:production
 ```
 
 Подробности и точный смысл каждого assertion: [docs/TESTING.md](docs/TESTING.md).
+
+## Подтверждённая приёмка
+
+Проверенный runtime commit [`b83fadf85c55`](https://github.com/komaroffsergei/fullstack-test-shop/commit/b83fadf85c55fbb249edb95094f4567f24b37fbb) прошёл:
+
+- [финальный CI `33499836115`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33499836115) — `success`;
+- [production deploy `33500223414`](https://github.com/komaroffsergei/fullstack-test-shop/actions/runs/33500223414) — `success`, immutable GHCR-образ;
+- 13/13 локальных PostgreSQL race-сценариев;
+- 9/9 black-box сценариев через настоящий `https://test-shop.komaroff-dev.ru`;
+- 3/3 локальных и 3/3 production Playwright-тестов;
+- 156/156 методов и функций с ведущими русскими комментариями;
+- финальный demo reset: `recovery=0`, `ready=ok`.
+
+Точные времена, assertions, найденные дефекты и внесённые исправления приведены в [отчёте полной приёмки](docs/ACCEPTANCE_REPORT.md).
 
 ## Почему код выдаётся ровно один раз
 
