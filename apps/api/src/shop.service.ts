@@ -217,6 +217,8 @@ export class ShopService {
       throw new UnprocessableEntityException('Product or promo is invalid');
     if (promo.usedCount >= promo.maxUses)
       throw new ConflictException('Promocode usage limit reached');
+    if (promo.currency && promo.currency !== product.currency)
+      throw new UnprocessableEntityException('Promocode currency does not match');
     return {
       ...calculatePrice(product.priceMinor, { type: promo.type, value: promo.value }),
       currency: product.currency,
@@ -294,10 +296,14 @@ export class ShopService {
    * Это защищает reset от удаления данных из-под уже захваченной worker'ом job.
    */
   async resetDemo() {
-    const processing = await prisma.deliveryJob.count({ where: { status: 'processing' } });
-    if (processing) throw new ServiceUnavailableException('Cannot reset while jobs are processing');
-    // Порядок удаления идёт от зависимых таблиц к родительским согласно внешним ключам.
-    await prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx) => {
+      // Табличные locks закрывают гонку «проверили processing=0, а worker тут же захватил job».
+      // Порядок соответствует worker: inbox → order → job, поэтому не создаёт обратного lock order.
+      await tx.$executeRaw`LOCK TABLE payment_events, orders, delivery_jobs IN ACCESS EXCLUSIVE MODE`;
+      const processing = await tx.deliveryJob.count({ where: { status: 'processing' } });
+      if (processing)
+        throw new ServiceUnavailableException('Cannot reset while jobs are processing');
+      // Порядок удаления идёт от зависимых таблиц к родительским согласно внешним ключам.
       await tx.providerCallAttempt.deleteMany();
       await tx.providerRequest.deleteMany();
       await tx.fulfillment.deleteMany();
@@ -310,7 +316,7 @@ export class ShopService {
       await tx.providerKey.createMany({ data: INITIAL_PROVIDER_KEY_ROWS });
       await tx.promocode.updateMany({ data: { usedCount: 0, active: true } });
       await tx.providerSetting.updateMany({ data: { faultMode: 'success', delayMs: 1500 } });
+      return { reset: true, requestId: randomUUID() };
     });
-    return { reset: true, requestId: randomUUID() };
   }
 }

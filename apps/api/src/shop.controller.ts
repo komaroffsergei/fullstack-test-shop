@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Post,
   Res,
   UseGuards,
@@ -62,7 +63,7 @@ export class OrdersController {
 
   /** Возвращает заказ по безопасному публичному UUID, а не внутреннему bigint. */
   @Get(':orderId')
-  get(@Param('orderId') orderId: string) {
+  get(@Param('orderId', new ParseUUIDPipe()) orderId: string) {
     return this.shop.order(orderId);
   }
 }
@@ -132,7 +133,7 @@ export class AdminController {
   /** Возвращает конкретный заказ в идемпотентную очередь выдачи. */
   @Post('orders/:orderId/retry-delivery')
   @HttpCode(HttpStatus.ACCEPTED)
-  retry(@Param('orderId') orderId: string) {
+  retry(@Param('orderId', new ParseUUIDPipe()) orderId: string) {
     return this.shop.retryDelivery(orderId);
   }
 

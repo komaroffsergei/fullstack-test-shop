@@ -402,6 +402,7 @@
           <a href="#codemap">15. Code map</a>
           <a href="#quiz">16. Итоговый тест</a>
           <a href="#glossary">17. Словарь</a>
+          <a href="../offline/index.html">↗ Весь код офлайн</a>
         </nav>
       </aside>
 
@@ -418,6 +419,11 @@
             Этот учебник объясняет не только «что лежит в какой папке», а причинно-следственную
             цепочку: какое требование решает каждая технология, где обеспечивается гарантия и каким
             тестом это доказано. Переключайте уровень объяснения слева.
+          </p>
+          <p>
+            <a href="../offline/index.html"
+              >Открыть автономный source handbook: 100+ файлов, поиск, номера строк и SHA-256 →</a
+            >
           </p>
         </header>
 
@@ -438,6 +444,11 @@
             </li>
             <li>После каждого модуля отвечайте вслух, а затем раскрывайте правильный ответ.</li>
             <li>В конце пройдите итоговый тест и повторите разделы, где ответили неверно.</li>
+            <li>
+              Когда захотите читать без интернета, откройте
+              <a href="../offline/index.html">offline source handbook</a>: исходники уже встроены в
+              HTML и скачиваются по одному файлу.
+            </li>
           </ol>
           <div class="note">
             Комментарии добавлены в исполняемые TypeScript-файлы, Angular-шаблоны, Prisma/SQL,
@@ -1229,6 +1240,26 @@ LIMIT 1;</code></pre>
                 <td>клиентская сумма не участвует</td>
               </tr>
               <tr>
+                <td>Mismatch amount/currency</td>
+                <td>payment snapshot validation</td>
+                <td>event invalid, job отсутствует</td>
+              </tr>
+              <tr>
+                <td>Оба provider дают 5xx</td>
+                <td>delivery_failed + stable request IDs</td>
+                <td>ручной retry восстанавливает один fulfillment</td>
+              </tr>
+              <tr>
+                <td>Reset во время processing</td>
+                <td>table locks + fail closed</td>
+                <td>503, данные не удалены</td>
+              </tr>
+              <tr>
+                <td>Публичный HTTPS</td>
+                <td>production black-box suite</td>
+                <td>9 сценариев без прямого доступа к БД</td>
+              </tr>
+              <tr>
                 <td>UI</td>
                 <td>Playwright</td>
                 <td>покупка, статус, responsive и интерактивы</td>
@@ -1266,9 +1297,14 @@ LIMIT 1;</code></pre>
               >Playwright E2E</a
             >,
             <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/tests/production/run.ts"
+              >production black-box</a
+            >,
+            <a
               href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/.github/workflows/ci.yml"
               >CI pipeline</a
-            >.
+            >
+            и <a href="../offline/index.html#file-tests-race-run-ts">те же тесты офлайн</a>.
           </p>
           <details>
             <summary>Контрольный вопрос: почему гонки тестируются с настоящим PostgreSQL?</summary>
@@ -1339,7 +1375,9 @@ LIMIT 1;</code></pre>
           <p>
             Начинайте с «точки входа», затем переходите к бизнес-методу и модели данных. Ссылки
             открывают текущую ветку <code>main</code> публичного репозитория; номера строк указывают
-            на начало ключевого блока.
+            на начало ключевого блока. Полностью автономные копии тех же файлов доступны в
+            <a href="../offline/index.html">source handbook</a>; там ссылки ведут на точные строки
+            даже без GitHub.
           </p>
           <table>
             <thead>
@@ -1559,6 +1597,26 @@ LIMIT 1;</code></pre>
                   >
                 </td>
                 <td>double click и responsive layout</td>
+              </tr>
+              <tr>
+                <td>Production black-box</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/tests/production/run.ts"
+                    >tests/production/run.ts</a
+                  >
+                </td>
+                <td>9 сценариев через публичный HTTPS</td>
+              </tr>
+              <tr>
+                <td>Offline source generator</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/scripts/generate-offline-docs.ts"
+                    >generate-offline-docs.ts</a
+                  >
+                </td>
+                <td>встраивание исходников, anchors, hash, поиск</td>
               </tr>
               <tr>
                 <td>CI</td>

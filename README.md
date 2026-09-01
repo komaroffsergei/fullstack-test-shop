@@ -8,7 +8,7 @@
 - Выдача: отдельный worker и две HTTP-заглушки поставщиков.
 - Production URL: [test-shop.komaroff-dev.ru](https://test-shop.komaroff-dev.ru)
 - API docs: [test-shop.komaroff-dev.ru/api/docs](https://test-shop.komaroff-dev.ru/api/docs)
-- CI: format, lint, strict typecheck, unit/integration/race/E2E, OpenAPI и runtime Docker smoke-test.
+- CI: format, typed lint, strict typecheck (workspace + root), unit, 13-scenario race, E2E, OpenAPI, offline-doc verification, Docker runtime smoke и gitleaks.
 
 ## Быстрый запуск
 
@@ -45,19 +45,34 @@ pnpm test:race
 
 Скрипт создаёт реальные конкурентные HTTP-запросы и затем проверяет PostgreSQL: одно событие для одинакового `event_id`, максимум один fulfillment, ровно один потраченный ключ, сохранение раннего webhook и лимит промокода.
 
+Текущая расширенная матрица содержит **13/13 сценариев**: помимо пяти критериев ТЗ она проверяет конфликт idempotency payload, server-owned price, amount/currency mismatch, payment simulator, timeout без fallback на B, два provider 5xx, стабильность request IDs и безопасный reset.
+
 Полная проверка:
 
 ```bash
 pnpm format:check
 pnpm lint
 pnpm typecheck
+pnpm comments:verify
 pnpm test
 pnpm build
 pnpm test:race
 pnpm test:e2e
+pnpm docs:verify
 ```
 
 Эта же матрица прошла в GitHub Actions. После production deploy дополнительно выполнен Playwright smoke-test прямо на публичном HTTPS-домене: пять обязательных интерактивов, двойной клик «Купить», оплата, выдача кода и отсутствие горизонтального overflow на ширине 390 px.
+
+Полная black-box приемка публичного стенда (9 сценариев) запускается с отдельно переданным server token и явным разрешением demo reset:
+
+```bash
+PRODUCTION_BASE_URL=https://test-shop.komaroff-dev.ru \
+PRODUCTION_ADMIN_TOKEN='<private>' \
+ALLOW_DEMO_RESET=1 \
+pnpm test:production
+```
+
+Подробности и точный смысл каждого assertion: [docs/TESTING.md](docs/TESTING.md).
 
 ## Почему код выдаётся ровно один раз
 
@@ -66,8 +81,11 @@ pnpm test:e2e
 ## Навигация по проекту
 
 - [Интерактивный HTML-учебник](docs/tutorial/index.html) — подробный курс по стеку и всем критическим потокам, переключатель «профессионально / как для 10 лет», контрольные вопросы и code map с прямыми ссылками на GitHub.
+- [Автономный HTML source handbook](docs/offline/index.html) — 100+ точных текстовых исходников внутри одного HTML: поиск по именам/коду, номера строк, deep links, копирование/скачивание, две версии объяснения и SHA-256 каждого файла. Интернет не нужен.
 - [CODEMAP.md](CODEMAP.md) — entrypoints, модули, таблицы и карта тестов.
 - [docs/REQUIREMENTS_MATRIX.md](docs/REQUIREMENTS_MATRIX.md) — полное соответствие ТЗ.
+- [docs/ACCEPTANCE_REPORT.md](docs/ACCEPTANCE_REPORT.md) — фактические локальные/CI/production результаты.
+- [docs/SUBMISSION_CHECKLIST.md](docs/SUBMISSION_CHECKLIST.md) — финальный preflight и создание чистого архива.
 - [docs/FIDELITY_LEDGER.md](docs/FIDELITY_LEDGER.md) — сверка браузера с макетом.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — схемы контейнеров, последовательностей и состояний.
 - [docs/API.md](docs/API.md), [docs/TESTING.md](docs/TESTING.md), [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md), [docs/SECURITY.md](docs/SECURITY.md).

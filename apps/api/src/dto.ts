@@ -1,5 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsInt, IsISO8601, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsIn,
+  IsInt,
+  IsISO8601,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 /** Вход создания заказа: клиент выбирает SKU, но не имеет права назначать цену. */
 export class CreateOrderDto {
@@ -11,12 +24,14 @@ export class CreateOrderDto {
   /** Сервер по SKU найдёт доверенные цену, валюту и товар. */
   @ApiProperty({ example: 'STEAM-TOPUP-500' })
   @IsString()
+  @MaxLength(120)
   sku!: string;
 
   /** Необязательный промокод будет нормализован и проверен в транзакции. */
   @ApiPropertyOptional({ example: 'WELCOME10' })
   @IsOptional()
   @IsString()
+  @MaxLength(120)
   promoCode?: string;
 }
 
@@ -25,6 +40,7 @@ export class PaymentWebhookDto {
   /** Глобально уникальный ID защищает от повторной доставки одного события. */
   @ApiProperty({ example: 'evt_a1b2c3' })
   @IsString()
+  @MaxLength(200)
   event_id!: string;
 
   /** Ссылка на публичный UUID заказа; FK намеренно нет для ранних webhook. */
@@ -46,6 +62,7 @@ export class PaymentWebhookDto {
   /** Валюта должна совпасть со снимком заказа. */
   @ApiProperty({ example: 'RUB' })
   @IsString()
+  @MaxLength(12)
   currency!: string;
 
   /** Время события отделено от времени его фактического получения. */
@@ -66,9 +83,11 @@ export class SimulatePaymentDto {
 /** Запрос предварительного расчёта промокода без резервирования лимита. */
 export class QuotePromoDto {
   @IsString()
+  @MaxLength(120)
   sku!: string;
 
   @IsString()
+  @MaxLength(120)
   promoCode!: string;
 }
 
@@ -78,9 +97,14 @@ export class AddProviderKeysDto {
   providerId!: 'A' | 'B';
 
   @IsString()
+  @MaxLength(120)
   sku!: string;
 
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(500)
   @IsString({ each: true })
+  @MaxLength(200, { each: true })
   codes!: string[];
 }
 

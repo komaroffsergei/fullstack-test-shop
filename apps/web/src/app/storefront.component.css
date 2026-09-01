@@ -489,6 +489,11 @@
     padding: 12px 0;
     grid-template-columns: 1fr auto;
   }
+  .catalog-menu {
+    right: 0;
+    left: auto;
+    width: min(270px, calc(100vw - 20px));
+  }
   .search {
     grid-column: 1/-1;
     grid-row: 2;

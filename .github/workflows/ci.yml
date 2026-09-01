@@ -38,8 +38,14 @@ jobs:
       - run: corepack enable && corepack prepare pnpm@11.7.0 --activate
       - run: pnpm install --frozen-lockfile
       - run: pnpm db:generate && pnpm db:deploy && pnpm db:seed
+      # Offline handbook обязан содержать точный snapshot текущего source, а не устаревшую копию.
+      - name: Verify generated offline documentation
+        run: |
+          pnpm docs:offline
+          git diff --exit-code -- docs/offline/index.html
+          pnpm docs:verify
       # Статические проверки и сборка должны стать зелёными до запуска браузера.
-      - run: pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build
+      - run: pnpm format:check && pnpm lint && pnpm typecheck && pnpm comments:verify && pnpm test && pnpm build
       - run: pnpm exec playwright install --with-deps chromium
       - name: Start application stack
         run: |

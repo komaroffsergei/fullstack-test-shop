@@ -5,4 +5,5 @@ coverage
 pnpm-lock.yaml
 packages/database/prisma/migrations
 apps/web/public/assets
+docs/offline/index.html
 .codex-doc-review-*
