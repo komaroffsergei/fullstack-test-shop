@@ -1,3 +1,4 @@
+<!-- Шапка связывает навигацию, раскрываемый каталог, поиск и вход в recovery-админку. -->
 <header class="site-header shell">
   <a class="brand" routerLink="/" aria-label="GG Shop — на главную"><span>GG</span>SHOP</a>
   <div class="catalog-wrap">
@@ -27,6 +28,7 @@
 </header>
 
 <main class="shell">
+  <!-- Интерактив №1–2: автоматическая/ручная карусель и выбор конкретного баннера. -->
   <section class="hero" aria-roledescription="carousel" aria-label="Предложения">
     <button
       class="hero-arrow left"
@@ -61,6 +63,7 @@
     </div>
   </section>
 
+  <!-- Интерактив №3: доступный список сервисов из исходного макета. -->
   <section class="services" id="services" aria-label="Сервисы">
     @for (service of services; track service[0]) {
       <button type="button" class="service-item">
@@ -73,6 +76,7 @@
     </button>
   </section>
 
+  <!-- Интерактив №4: выбор валюты; покупка всё равно использует серверную цену SKU. -->
   <section class="steam-panel" aria-label="Пополнение Steam">
     <div class="steam-title">
       <img src="/assets/steam.png" alt="" /><span
@@ -105,6 +109,7 @@
     </button>
   </section>
 
+  <!-- Интерактив №5: карточки каталога и идемпотентная кнопка покупки. -->
   <section class="products" id="products">
     <div class="section-heading">
       <h2>Популярные товары</h2>
@@ -120,6 +125,7 @@
       <div class="loading">Загружаем каталог…</div>
     } @else {
       <div class="product-grid">
+        <!-- track по SKU сохраняет DOM-узлы стабильными при обновлении signals. -->
         @for (product of visibleProducts(); track product.sku) {
           <article class="product-card">
             <img [src]="productImage()" [alt]="product.name" />

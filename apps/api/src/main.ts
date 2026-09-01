@@ -10,13 +10,17 @@ import { randomUUID } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
 import { AppModule } from './app.module';
 
+/** Собирает и запускает production HTTP-приложение NestJS. */
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
+  // Helmet добавляет безопасные HTTP-заголовки; CSP отключена из-за встроенного Swagger UI.
   app.use(helmet({ contentSecurityPolicy: false }));
+  // Middleware присваивает correlation id и пишет один структурированный JSON-лог на запрос.
   app.use((request: Request, response: Response, next: NextFunction) => {
     const requestId = request.header('x-request-id') ?? randomUUID();
     const startedAt = Date.now();
     response.setHeader('x-request-id', requestId);
+    // Событие finish гарантирует, что в лог попадёт фактический HTTP-статус и длительность.
     response.on('finish', () =>
       console.info(
         JSON.stringify({
@@ -45,6 +49,7 @@ async function bootstrap(): Promise<void> {
     .addApiKey({ type: 'apiKey', in: 'header', name: 'X-Admin-Token' }, 'admin')
     .build();
   const document = SwaggerModule.createDocument(app, config);
+  // Одна и та же схема доступна человеку через Swagger и автоматике как JSON.
   SwaggerModule.setup('api/docs', app, document);
   app
     .getHttpAdapter()
@@ -53,8 +58,10 @@ async function bootstrap(): Promise<void> {
 
   const webRoot = join(process.cwd(), 'public');
   if (existsSync(webRoot)) {
+    // Production-контейнер отдаёт собранный Angular с того же origin, что и API.
     app.useStaticAssets(webRoot);
     app.use((request: Request, response: Response, next: NextFunction) => {
+      // Не маскируем API и запросы реальных файлов SPA fallback'ом.
       if (request.path.startsWith('/api') || request.path.includes('.')) return next();
       response.sendFile(join(webRoot, 'index.html'));
     });
@@ -65,4 +72,5 @@ async function bootstrap(): Promise<void> {
   Logger.log(`API listening on ${port}`, 'Bootstrap');
 }
 
+// `void` явно показывает линтеру, что promise запуска приложения обработан точкой входа.
 void bootstrap();

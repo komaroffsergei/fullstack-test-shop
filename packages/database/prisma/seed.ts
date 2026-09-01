@@ -20,7 +20,9 @@ const products = [
 
 const keys = INITIAL_PROVIDER_KEYS;
 
+/** Идемпотентно приводит справочники и демонстрационные пулы к исходному состоянию. */
 async function seed(): Promise<void> {
+  // Upsert позволяет безопасно запускать seed повторно без дублирования товаров.
   for (const [sku, name, type, priceMinor, image] of products) {
     await prisma.product.upsert({
       where: { sku },
@@ -35,6 +37,7 @@ async function seed(): Promise<void> {
     { code: 'LIMIT3', type: 'percent' as const, value: 25, maxUses: 3 },
     { code: 'ONCEONLY', type: 'percent' as const, value: 50, maxUses: 1 },
   ];
+  // Существующие счётчики использования намеренно не обнуляются обычным seed.
   for (const promo of promos) {
     await prisma.promocode.upsert({
       where: { code: promo.code },
@@ -43,6 +46,7 @@ async function seed(): Promise<void> {
     });
   }
 
+  // Обе копии mock-provider читают свои детерминированные настройки из одной БД.
   for (const providerId of [ProviderId.A, ProviderId.B]) {
     await prisma.providerSetting.upsert({
       where: { providerId },
@@ -51,6 +55,7 @@ async function seed(): Promise<void> {
     });
   }
 
+  // Уникальность code в БД делает повторный импорт безопасным.
   for (const [index, code] of keys.entries()) {
     const providerId = index % 2 === 0 ? ProviderId.A : ProviderId.B;
     await prisma.providerKey.upsert({
@@ -61,6 +66,7 @@ async function seed(): Promise<void> {
   }
 }
 
+// Соединение закрывается и при успехе, и при ошибке, чтобы CLI-процесс всегда завершался.
 seed()
   .then(() => prisma.$disconnect())
   .catch(async (error: unknown) => {

@@ -1,0 +1,1757 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Интерактивный вводный курс по архитектуре fullstack-test-shop с code map и контрольными вопросами"
+    />
+    <title>Fullstack Test Shop — интерактивный учебник</title>
+    <style>
+      /* Учебник автономен: оформление не зависит от CDN и работает прямо с диска. */
+      :root {
+        color-scheme: dark;
+        --bg: #08111f;
+        --panel: #111d30;
+        --panel-2: #17263d;
+        --text: #eef5ff;
+        --muted: #a7b8d0;
+        --line: #2a3c57;
+        --accent: #70e1b3;
+        --accent-2: #78a9ff;
+        --warning: #ffc56e;
+        --danger: #ff8d94;
+        --code: #07101c;
+        --radius: 18px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        background: radial-gradient(circle at 80% 0%, #173252 0, transparent 28rem), var(--bg);
+        color: var(--text);
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        line-height: 1.65;
+      }
+
+      a {
+        color: var(--accent-2);
+      }
+
+      a:hover {
+        color: var(--accent);
+      }
+
+      code,
+      pre {
+        font-family: 'Cascadia Code', Consolas, monospace;
+      }
+
+      code {
+        color: #c8e0ff;
+      }
+
+      pre {
+        overflow-x: auto;
+        margin: 1rem 0;
+        padding: 1rem;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--code);
+        color: #d7e8ff;
+        line-height: 1.5;
+      }
+
+      table {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.95rem;
+      }
+
+      th,
+      td {
+        padding: 0.75rem;
+        border: 1px solid var(--line);
+        vertical-align: top;
+        text-align: left;
+        overflow-wrap: anywhere;
+      }
+
+      th {
+        background: #172945;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 300px minmax(0, 1fr);
+        min-height: 100vh;
+      }
+
+      aside {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+        padding: 1.2rem;
+        border-right: 1px solid var(--line);
+        background: rgb(7 16 28 / 92%);
+        backdrop-filter: blur(18px);
+      }
+
+      aside h1 {
+        margin: 0 0 0.2rem;
+        font-size: 1.18rem;
+      }
+
+      aside p {
+        margin-top: 0;
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      .controls {
+        display: grid;
+        gap: 0.7rem;
+        margin: 1rem 0;
+      }
+
+      input,
+      select,
+      button {
+        width: 100%;
+        padding: 0.72rem 0.85rem;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel-2);
+        color: var(--text);
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+        border-color: #367d67;
+        background: #1c654f;
+        font-weight: 700;
+      }
+
+      nav {
+        display: grid;
+        gap: 0.25rem;
+      }
+
+      nav a {
+        padding: 0.36rem 0.5rem;
+        border-radius: 8px;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+
+      nav a:hover {
+        background: var(--panel-2);
+        color: var(--text);
+      }
+
+      main {
+        width: min(1120px, 100%);
+        min-width: 0;
+        padding: 3rem clamp(1rem, 4vw, 4.5rem) 6rem;
+      }
+
+      .hero {
+        padding: clamp(1.5rem, 4vw, 3.2rem);
+        border: 1px solid #31527d;
+        border-radius: 28px;
+        background: linear-gradient(145deg, rgb(28 58 91 / 88%), rgb(15 35 57 / 78%));
+        box-shadow: 0 30px 80px rgb(0 0 0 / 25%);
+      }
+
+      .hero h2 {
+        max-width: 850px;
+        margin: 0;
+        font-size: clamp(2rem, 5vw, 4.4rem);
+        line-height: 1.02;
+      }
+
+      .hero p {
+        max-width: 780px;
+        color: #c4d6ed;
+        font-size: 1.08rem;
+      }
+
+      .tag {
+        display: inline-block;
+        margin: 0 0.35rem 0.35rem 0;
+        padding: 0.2rem 0.58rem;
+        border: 1px solid #3e5b7e;
+        border-radius: 999px;
+        color: #c9dbf4;
+        font-size: 0.8rem;
+      }
+
+      section {
+        min-width: 0;
+        scroll-margin-top: 1rem;
+        margin-top: 3rem;
+        padding: clamp(1.1rem, 3vw, 2rem);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: rgb(17 29 48 / 88%);
+      }
+
+      section h2 {
+        margin-top: 0;
+        line-height: 1.2;
+      }
+
+      h3 {
+        margin-top: 1.8rem;
+        color: #dceaff;
+      }
+
+      .objectives,
+      .note,
+      .warning {
+        margin: 1rem 0;
+        padding: 1rem;
+        border-left: 4px solid var(--accent-2);
+        border-radius: 8px;
+        background: #12243c;
+      }
+
+      .warning {
+        border-left-color: var(--warning);
+      }
+
+      .explanations {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      .explanation {
+        padding: 1rem;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--panel-2);
+      }
+
+      .explanation h3 {
+        margin-top: 0;
+      }
+
+      .pro h3 {
+        color: var(--accent-2);
+      }
+
+      .kid h3 {
+        color: var(--accent);
+      }
+
+      body[data-level='pro'] .kid,
+      body[data-level='kid'] .pro {
+        display: none;
+      }
+
+      body[data-level='pro'] .explanations,
+      body[data-level='kid'] .explanations {
+        grid-template-columns: 1fr;
+      }
+
+      .flow {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.55rem;
+        margin: 1rem 0;
+      }
+
+      .flow span {
+        padding: 0.55rem 0.75rem;
+        border: 1px solid #3d5878;
+        border-radius: 10px;
+        background: #142841;
+      }
+
+      .flow b {
+        color: var(--accent);
+      }
+
+      details {
+        margin: 0.7rem 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #0c1829;
+      }
+
+      summary {
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      .quiz-question {
+        margin: 1rem 0;
+        padding: 1rem;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+      }
+
+      .quiz-question label {
+        display: block;
+        margin: 0.45rem 0;
+      }
+
+      .quiz-question input {
+        width: auto;
+        margin-right: 0.45rem;
+      }
+
+      #quiz-result {
+        min-height: 2rem;
+        color: var(--accent);
+        font-weight: 800;
+      }
+
+      .hidden-by-search {
+        display: none;
+      }
+
+      footer {
+        padding: 2rem 0;
+        color: var(--muted);
+      }
+
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        aside {
+          position: static;
+          height: auto;
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        nav {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        main {
+          padding-top: 1.5rem;
+        }
+
+        .explanations {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body data-level="both">
+    <div class="layout">
+      <aside>
+        <h1>Fullstack Test Shop</h1>
+        <p>Интерактивный учебник и живая карта кода</p>
+        <div class="controls">
+          <label for="level">Уровень объяснения</label>
+          <select id="level">
+            <option value="both">Оба уровня</option>
+            <option value="pro">Профессионально</option>
+            <option value="kid">Как для 10 лет</option>
+          </select>
+          <label for="search">Поиск по учебнику</label>
+          <input id="search" type="search" placeholder="Например: webhook" />
+        </div>
+        <nav aria-label="Оглавление">
+          <a href="#start">0. Как учиться</a>
+          <a href="#architecture">1. Архитектура</a>
+          <a href="#stack">2. Стек</a>
+          <a href="#monorepo">3. Monorepo</a>
+          <a href="#domain">4. Домен</a>
+          <a href="#orders">5. Заказы</a>
+          <a href="#payments">6. Платежи</a>
+          <a href="#worker">7. Worker</a>
+          <a href="#providers">8. Поставщики</a>
+          <a href="#promos">9. Промокоды</a>
+          <a href="#angular">10. Angular</a>
+          <a href="#recovery">11. Восстановление</a>
+          <a href="#operations">12. Наблюдаемость</a>
+          <a href="#testing">13. Тестирование</a>
+          <a href="#deploy">14. Deployment</a>
+          <a href="#codemap">15. Code map</a>
+          <a href="#quiz">16. Итоговый тест</a>
+          <a href="#glossary">17. Словарь</a>
+        </nav>
+      </aside>
+
+      <main>
+        <header class="hero">
+          <p class="tag">Node.js 22</p>
+          <p class="tag">TypeScript</p>
+          <p class="tag">Angular</p>
+          <p class="tag">NestJS</p>
+          <p class="tag">PostgreSQL</p>
+          <p class="tag">Prisma</p>
+          <h2>Как магазин выдаёт один цифровой ключ — даже когда всё идёт наперекосяк</h2>
+          <p>
+            Этот учебник объясняет не только «что лежит в какой папке», а причинно-следственную
+            цепочку: какое требование решает каждая технология, где обеспечивается гарантия и каким
+            тестом это доказано. Переключайте уровень объяснения слева.
+          </p>
+        </header>
+
+        <section id="start" class="searchable">
+          <h2>0. Как проходить учебник</h2>
+          <div class="objectives">
+            После курса вы сможете проследить покупку от двойного клика до кода, объяснить
+            идемпотентность, inbox, очередь PostgreSQL, безопасный retry и найти реализацию каждого
+            механизма по прямой ссылке.
+          </div>
+          <ol>
+            <li>Сначала прочитайте архитектуру и пройдите путь одной покупки.</li>
+            <li>
+              Затем разберите три главные гонки: двойной клик, повтор webhook, timeout поставщика.
+            </li>
+            <li>
+              Открывайте ссылки «код» рядом с объяснениями и сопоставляйте текст с реализацией.
+            </li>
+            <li>После каждого модуля отвечайте вслух, а затем раскрывайте правильный ответ.</li>
+            <li>В конце пройдите итоговый тест и повторите разделы, где ответили неверно.</li>
+          </ol>
+          <div class="note">
+            Комментарии добавлены в исполняемые TypeScript-файлы, Angular-шаблоны, Prisma/SQL,
+            Docker и CI. В JSON, lock-файлы и сгенерированные артефакты комментарии намеренно не
+            вставлены: JSON их не поддерживает, а generated-файлы должны пересоздаваться
+            генератором.
+          </div>
+        </section>
+
+        <section id="architecture" class="searchable">
+          <h2>1. Архитектура: путь одной покупки</h2>
+          <div class="flow" aria-label="Поток покупки">
+            <span>Angular</span><b>→</b><span>NestJS API</span><b>→</b><span>PostgreSQL</span
+            ><b>→</b><span>Webhook inbox</span><b>→</b><span>Worker</span><b>→</b
+            ><span>Provider A/B</span><b>→</b><span>Код покупателю</span>
+          </div>
+          <div class="explanations">
+            <article class="explanation pro">
+              <h3>Профессионально</h3>
+              <p>
+                Система разделяет синхронный HTTP-контур и асинхронную обработку. API быстро
+                валидирует запрос и атомарно фиксирует намерение в PostgreSQL. Webhook сначала
+                попадает в durable inbox, после чего worker в отдельных коротких транзакциях меняет
+                state machine заказа и создаёт delivery job. Внешний вызов поставщика выполняется
+                вне транзакции. Финальная запись fulfillment снова защищена блокировкой строки и
+                UNIQUE.
+              </p>
+            </article>
+            <article class="explanation kid">
+              <h3>Как для 10 лет</h3>
+              <p>
+                Представь ресторан. Официант записывает заказ в тетрадь и сразу говорит «принято».
+                Повар потом берёт карточку, готовит блюдо и отмечает результат. Даже если посетитель
+                дважды крикнул заказ или официант дважды принёс записку, в тетради остаётся одна
+                покупка и выдаётся один ключ.
+              </p>
+            </article>
+          </div>
+          <h3>Почему не один большой HTTP-запрос?</h3>
+          <p>
+            Платёж и поставщик — внешние системы: они могут отвечать медленно, повторять сообщения
+            или оборвать соединение после выполнения операции. Если держать всё в одном запросе и
+            одной транзакции, блокировки станут длинными, а падение процесса потеряет промежуточное
+            состояние. Запись этапов в БД делает процесс продолжимым.
+          </p>
+          <details>
+            <summary>Контрольный вопрос: зачем API и worker разделены?</summary>
+            <p>
+              API быстро принимает запросы, а worker надёжно повторяет длительную обработку. Падение
+              worker не мешает принимать webhook: события уже сохранены в PostgreSQL.
+            </p>
+          </details>
+        </section>
+
+        <section id="stack" class="searchable">
+          <h2>2. Стек и роль каждой технологии</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Технология</th>
+                <th>Что делает</th>
+                <th>Какое требование закрывает</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Node.js 22</td>
+                <td>Исполняет API, worker и mock-provider</td>
+                <td>Единый runtime для серверных частей</td>
+              </tr>
+              <tr>
+                <td>TypeScript strict</td>
+                <td>Проверяет типы до запуска</td>
+                <td>Согласованные статусы, DTO и контракты</td>
+              </tr>
+              <tr>
+                <td>Angular</td>
+                <td>Витрина, заказ, админка</td>
+                <td>Пять интерактивов и полный путь покупки</td>
+              </tr>
+              <tr>
+                <td>NestJS</td>
+                <td>REST, DTO, guard, Swagger</td>
+                <td>Явные API-контракты и защита админки</td>
+              </tr>
+              <tr>
+                <td>PostgreSQL</td>
+                <td>Данные, locks, queue, constraints</td>
+                <td>Гарантии при параллельных запросах</td>
+              </tr>
+              <tr>
+                <td>Prisma</td>
+                <td>Модели и обычные запросы</td>
+                <td>Типобезопасная работа с данными</td>
+              </tr>
+              <tr>
+                <td>Raw SQL</td>
+                <td><code>FOR UPDATE</code>, <code>SKIP LOCKED</code></td>
+                <td>Точная конкурентная семантика</td>
+              </tr>
+              <tr>
+                <td>Docker Compose</td>
+                <td>Поднимает одинаковое окружение</td>
+                <td>Воспроизводимый запуск и deployment</td>
+              </tr>
+              <tr>
+                <td>Jest/Supertest/Playwright</td>
+                <td>Проверяют уровни системы</td>
+                <td>Доказательство критериев приёмки</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="explanations">
+            <article class="explanation pro">
+              <h3>Профессионально</h3>
+              <p>
+                Prisma выбран для CRUD и типизации, но не скрывает специфические возможности БД.
+                Там, где correctness зависит от уровня блокировок, используется параметризованный
+                raw SQL. Это прагматичная граница: ORM повышает скорость разработки, PostgreSQL
+                остаётся источником строгих инвариантов.
+              </p>
+            </article>
+            <article class="explanation kid">
+              <h3>Как для 10 лет</h3>
+              <p>
+                Angular рисует магазин, NestJS разговаривает с браузером, PostgreSQL хранит тетрадь,
+                Prisma помогает удобно в ней писать, а Docker выдаёт всем одинаковую коробку с
+                нужными деталями.
+              </p>
+            </article>
+          </div>
+          <details>
+            <summary>Контрольный вопрос: почему одной проверки TypeScript недостаточно?</summary>
+            <p>
+              Типы не координируют два одновременно работающих процесса. Гонки останавливают
+              транзакции, блокировки и ограничения UNIQUE непосредственно в общей базе.
+            </p>
+          </details>
+        </section>
+
+        <section id="monorepo" class="searchable">
+          <h2>3. Monorepo: как разложен проект</h2>
+          <pre><code>apps/
+  web/                Angular: витрина, заказ, админка
+  api/                NestJS: REST, webhook, Swagger, health, metrics
+  worker/             асинхронные события оплаты и выдача
+  mock-provider/      одна программа, два запуска A и B
+packages/
+  domain/             чистые бизнес-правила
+  database/           Prisma schema, migration, seed
+  api-client/         общие типы контракта
+tests/
+  race/               параллельные состязательные сценарии
+  e2e/                пользовательский путь в браузере
+docs/                 архитектура, ADR, матрица ТЗ, этот учебник</code></pre>
+          <div class="explanations">
+            <article class="explanation pro">
+              <h3>Профессионально</h3>
+              <p>
+                pnpm workspace даёт один lockfile, согласованные версии и локальные package links.
+                Доменный пакет не зависит от NestJS/Angular: правила цены и переходов тестируются
+                как чистые функции. API и worker используют одну модель БД, но имеют разные
+                entrypoint и жизненный цикл.
+              </p>
+            </article>
+            <article class="explanation kid">
+              <h3>Как для 10 лет</h3>
+              <p>
+                Это один большой конструктор с отдельными коробками. Детали экрана лежат в
+                <code>web</code>, детали разговора — в <code>api</code>, ночной помощник — в
+                <code>worker</code>, а общие правила лежат в коробке <code>domain</code>, чтобы их
+                не копировать.
+              </p>
+            </article>
+          </div>
+          <details>
+            <summary>Контрольный вопрос: зачем правила цены вынесены из контроллера?</summary>
+            <p>
+              Чтобы HTTP-слой только переводил запросы, а бизнес-правило было единым, независимо
+              тестировалось и могло одинаково использоваться разными приложениями.
+            </p>
+          </details>
+        </section>
+
+        <section id="domain" class="searchable">
+          <h2>4. Домен: статусы, деньги и неизменяемые правила</h2>
+          <p>
+            Домен — это язык задачи. Здесь нет кнопок и HTTP: только разрешённые статусы, переходы,
+            вычисление цены и отпечаток заказа.
+          </p>
+          <div class="flow" aria-label="Основной путь статусов">
+            <span>created</span><b>→</b><span>paid</span><b>→</b><span>delivering</span><b>→</b
+            ><span>delivered</span>
+          </div>
+          <p>
+            Ответвления ошибок: <code>created → payment_failed</code>,
+            <code>delivering → out_of_stock</code> или <code>delivery_failed</code>. Восстановление
+            разрешает вернуть ошибку выдачи в <code>delivering</code>. После
+            <code>delivered</code> регресс запрещён.
+          </p>
+          <div class="explanations">
+            <article class="explanation pro">
+              <h3>Профессионально</h3>
+              <p>
+                State machine централизует допустимые переходы и исключает случайные присваивания.
+                Цена хранится целым числом копеек: это исключает двоичные ошибки floating point.
+                <code>fingerprintOrder</code> канонизирует значимые поля intent; его сравнение
+                отличает корректный replay от переиспользования ключа с другим телом.
+              </p>
+              <p>
+                Критические гарантии продублированы в БД: <code>fulfillments.order_id UNIQUE</code>,
+                <code>fulfillments.code UNIQUE</code>, <code>payment_events.event_id UNIQUE</code>.
+                Код проверяет намерение, БД остаётся последней линией защиты.
+              </p>
+            </article>
+            <article class="explanation kid">
+              <h3>Как для 10 лет</h3>
+              <p>
+                У заказа есть клетки настольной игры. Фишку можно двигать только по нарисованным
+                стрелкам. Если ключ уже отдан, назад фишку двигать нельзя. Деньги считают копейками,
+                как целыми кубиками: половинка случайно не потеряется.
+              </p>
+            </article>
+          </div>
+          <p>
+            Код:
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/packages/domain/src/index.ts#L52"
+              >расчёт цены</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/packages/domain/src/index.ts#L76"
+              >fingerprint заказа</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/packages/database/prisma/schema.prisma#L91"
+              >модель Order</a
+            >.
+          </p>
+          <details>
+            <summary>Контрольный вопрос: почему цена — не число 19.99?</summary>
+            <p>
+              Десятичные дроби часто нельзя точно представить в двоичной памяти. Значение 1999
+              копеек целое, поэтому сумма, скидка и сравнение выполняются предсказуемо.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Контрольный вопрос: почему правил в TypeScript и UNIQUE в БД не слишком много?
+            </summary>
+            <p>
+              Они решают разные задачи. Код сообщает понятную бизнес-ошибку, а UNIQUE гарантирует
+              корректность даже в гонке между двумя процессами.
+            </p>
+          </details>
+        </section>
+
+        <section id="orders" class="searchable">
+          <h2>5. Создание заказа и идемпотентность двойного клика</h2>
+          <pre><code>POST /api/v1/orders
+Idempotency-Key: один-стабильный-ключ
+{ "orderId": "публичный-uuid", "sku": "steam-1000", "promoCode": "START10" }</code></pre>
+          <div class="explanations">
+            <article class="explanation pro">
+              <h3>Профессионально</h3>
+              <p>
+                Клиент генерирует UUID intent и один idempotency key до запроса. API загружает товар
+                и цену исключительно с сервера, блокирует строку промокода при необходимости,
+                создаёт redemption и заказ в одной транзакции. Уникальность
+                <code>orders.idempotency_key</code> сериализует гонку без глобальной блокировки.
+              </p>
+              <p>
+                При конфликте <code>P2002</code> проигравший запрос читает победившую запись. Если
+                fingerprint совпал — возвращается прежний заказ с HTTP 200; если содержимое иное —
+                HTTP 409. Так retry безопасен, но ключ нельзя использовать для другой покупки.
+              </p>
+            </article>
+            <article class="explanation kid">
+              <h3>Как для 10 лет</h3>
+              <p>
+                Покупатель приклеивает к покупке уникальный номер. Если кнопка нажалась дважды,
+                продавец видит тот же номер и отвечает: «Этот заказ уже записан». Если с тем же
+                номером пытаются заказать другой товар, продавец замечает подмену и отказывает.
+              </p>
+            </article>
+          </div>
+          <div class="warning">
+            Клиент не присылает сумму, которой можно доверять. Даже если изменить JavaScript в
+            браузере, API берёт цену из <code>products</code>, применяет скидку сам и сохраняет
+            snapshot цены в заказе.
+          </div>
+          <p>
+            Код:
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/web/src/app/storefront.component.ts#L123"
+              >Angular buy()</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/api/src/shop.service.ts#L64"
+              >ShopService.createOrder()</a
+            >.
+          </p>
+          <details>
+            <summary>Контрольный вопрос: можно ли генерировать новый key при каждом retry?</summary>
+            <p>
+              Нет. Сервер воспримет его как новое намерение и сможет создать второй заказ. Один
+              пользовательский intent должен жить с одним ключом до однозначного ответа.
+            </p>
+          </details>
+        </section>
+
+        <section id="payments" class="searchable">
+          <h2>6. Платёжный webhook и durable inbox</h2>
+          <div class="flow">
+            <span>Платёжная система</span><b>→</b><span>payment_events: pending</span><b>→</b
+            ><span>HTTP 200</span><b>→</b><span>worker применяет событие</span>
+          </div>
+          <div class="explanations">
+            <article class="explanation pro">
+              <h3>Профессионально</h3>
+              <p>
+                Endpoint сначала атомарно вставляет событие в inbox и только затем отвечает 200.
+                <code>event_id UNIQUE</code> делает повтор доставки безопасным. Внешний UUID заказа
+                намеренно не является обязательным FK события: webhook может прийти раньше создания
+                заказа и остаться pending.
+              </p>
+              <p>
+                Worker позже блокирует событие, ищет заказ и проверяет сумму с валютой по snapshot.
+                Валидный <code>paid</code> имеет приоритет над <code>failed</code>, а delivered
+                никогда не регрессирует. Пятьдесят разных paid-событий могут храниться для аудита,
+                но unique delivery job запускает выдачу лишь однажды.
+              </p>
+            </article>
+            <article class="explanation kid">
+              <h3>Как для 10 лет</h3>
+              <p>
+                Почтальон может принести одно письмо дважды или письмо может приехать раньше
+                посылки. Мы сначала кладём письмо в надёжный ящик и ставим на нём номер. Повторное
+                письмо с тем же номером не считается новым, а раннее спокойно ждёт появления заказа.
+              </p>
+            </article>
+          </div>
+          <p>
+            Код:
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/api/src/shop.service.ts#L186"
+              >приём webhook</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/worker/src/worker.service.ts#L67"
+              >применение события worker</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/packages/database/prisma/schema.prisma#L119"
+              >PaymentEvent</a
+            >.
+          </p>
+          <details>
+            <summary>
+              Контрольный вопрос: почему нельзя сначала ответить 200, а потом сохранить?
+            </summary>
+            <p>
+              Процесс может упасть между ответом и записью. Платёжная система уже считает доставку
+              успешной и не повторит webhook — оплаченный заказ будет потерян.
+            </p>
+          </details>
+          <details>
+            <summary>Контрольный вопрос: что происходит с webhook до заказа?</summary>
+            <p>
+              Он сохраняется со статусом pending. Worker не помечает его применённым и вернётся к
+              нему после появления соответствующего публичного orderId.
+            </p>
+          </details>
+        </section>
+
+        <section id="worker" class="searchable">
+          <h2>7. Worker и очередь в PostgreSQL</h2>
+          <pre><code>SELECT id
+FROM delivery_jobs
+WHERE status = 'pending' AND run_after &lt;= now()
+FOR UPDATE SKIP LOCKED
+LIMIT 1;</code></pre>
+          <div class="explanations">
+            <article class="explanation pro">
+              <h3>Профессионально</h3>
+              <p>
+                Несколько worker могут одновременно claim-ить задания. <code>SKIP LOCKED</code>
+                пропускает уже занятые строки вместо ожидания. Claim — короткая транзакция: статус
+                переводится в processing, записывается lease owner/expiration, затем lock
+                освобождается. HTTP поставщику выполняется уже вне транзакции.
+              </p>
+              <p>
+                Lease позволяет вернуть зависшее задание после падения процесса.
+                <code>run_after</code> задаёт backoff, <code>attempts</code> ограничивает безопасные
+                повторы. Финализация снова блокирует заказ и проверяет его состояние, поэтому
+                устаревший worker не перезапишет более новый результат.
+              </p>
+            </article>
+            <article class="explanation kid">
+              <h3>Как для 10 лет</h3>
+              <p>
+                На столе лежат карточки заданий. Каждый помощник быстро ставит на одной карточке
+                своё имя и уносит её. Занятые карточки другие не ждут, а берут следующую. Если
+                помощник пропал, срок подписи закончится и карточку можно будет подобрать снова.
+              </p>
+            </article>
+          </div>
+          <p>
+            Код:
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/worker/src/worker.service.ts#L153"
+              >claim и processDeliveryJob()</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/packages/database/prisma/schema.prisma#L139"
+              >DeliveryJob</a
+            >.
+          </p>
+          <details>
+            <summary>Контрольный вопрос: почему HTTP нельзя выполнять внутри транзакции?</summary>
+            <p>
+              Неизвестно, сколько ответит сеть. Длинная транзакция удерживает locks, увеличивает
+              конкуренцию и риск дедлоков. В БД фиксируется намерение, HTTP идёт без lock, затем
+              результат атомарно финализируется.
+            </p>
+          </details>
+        </section>
+
+        <section id="providers" class="searchable">
+          <h2>8. Поставщики: самая опасная ловушка timeout-after-issue</h2>
+          <div class="flow">
+            <span>стабильный request_id</span><b>→</b><span>Provider A резервирует код</span><b>→</b
+            ><span>ответ потерян</span><b>→</b><span>повтор того же request_id</span><b>→</b
+            ><span>тот же код</span>
+          </div>
+          <div class="explanations">
+            <article class="explanation pro">
+              <h3>Профессионально</h3>
+              <p>
+                Timeout не доказывает, что операция не состоялась. Поэтому для пары заказ/поставщик
+                создаётся стабильный <code>provider_request.request_id</code>. Mock-provider сначала
+                атомарно резервирует key и записывает <code>request_id → code</code>, а уже после
+                может имитировать потерю ответа. Replay возвращает прежний результат и не расходует
+                новый ключ.
+              </p>
+              <p>
+                После timeout/5xx worker повторяет A с тем же ID. На B разрешено переключиться
+                только после однозначного <code>out-of-stock</code> от A: лишь тогда доказано, что A
+                ничего не выдал. Если A молчит после возможной выдачи, fallback мог бы выдать второй
+                товар.
+              </p>
+            </article>
+            <article class="explanation kid">
+              <h3>Как для 10 лет</h3>
+              <p>
+                Ты попросил кладовщика выдать билет, но телефон оборвался. Нельзя сразу звонить
+                другому кладовщику: первый мог уже отдать билет. Надо повторить первому тот же номер
+                просьбы. Он посмотрит запись и вернёт именно прежний билет.
+              </p>
+            </article>
+          </div>
+          <p>
+            Код:
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/worker/src/worker.service.ts#L213"
+              >callProvider()</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/mock-provider/src/provider.service.ts#L20"
+              >ProviderService.issue()</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/worker/src/worker.service.ts#L292"
+              >атомарная complete()</a
+            >.
+          </p>
+          <details>
+            <summary>Контрольный вопрос: можно ли после timeout A сразу вызвать B?</summary>
+            <p>
+              Нет. Timeout — неопределённый исход: A мог выдать код. Сначала повторяем A с тем же
+              request_id. B допустим лишь после явного ответа A «ничего не выдано / нет остатков».
+            </p>
+          </details>
+          <details>
+            <summary>Контрольный вопрос: где физически предотвращается второй fulfillment?</summary>
+            <p>
+              В транзакции complete проверяется текущий заказ, а в таблице действует
+              <code>order_id UNIQUE</code>. Отдельный <code>code UNIQUE</code> не позволяет
+              закрепить один код за двумя заказами.
+            </p>
+          </details>
+        </section>
+
+        <section id="promos" class="searchable">
+          <h2>9. Промокоды под конкурентной нагрузкой</h2>
+          <div class="explanations">
+            <article class="explanation pro">
+              <h3>Профессионально</h3>
+              <p>
+                Строка промокода читается <code>FOR UPDATE</code> внутри транзакции создания заказа.
+                После проверки активности и лимита создаётся уникальный redemption для заказа и
+                увеличивается <code>used_count</code>. Параллельные запросы сериализуются на одной
+                строке, поэтому успешных применений не больше <code>max_uses</code>.
+              </p>
+              <p>
+                Повтор того же idempotency key не создаёт новый redemption: проигравшая транзакция
+                откатывается полностью, а запрос получает уже созданный заказ.
+              </p>
+            </article>
+            <article class="explanation kid">
+              <h3>Как для 10 лет</h3>
+              <p>
+                У кассира осталось три купона. К каждому подходит только один человек за раз, кассир
+                ставит галочку и уменьшает остаток. Даже если одновременно прибежали 50 человек,
+                четвёртого купона из воздуха не появится.
+              </p>
+            </article>
+          </div>
+          <p>
+            Код:
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/api/src/shop.service.ts#L64"
+              >транзакция заказа и промокода</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/packages/database/prisma/schema.prisma#L216"
+              >Promocode и PromoRedemption</a
+            >.
+          </p>
+          <details>
+            <summary>
+              Контрольный вопрос: почему недостаточно сначала прочитать used_count, затем обновить?
+            </summary>
+            <p>
+              Два запроса могут одновременно увидеть одно и то же старое значение и оба пройти
+              проверку. Блокировка строки превращает проверку и увеличение в одну последовательную
+              критическую секцию.
+            </p>
+          </details>
+        </section>
+
+        <section id="angular" class="searchable">
+          <h2>10. Angular: три экрана и пользовательский путь</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Маршрут</th>
+                <th>Компонент</th>
+                <th>Ответственность</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>/</code></td>
+                <td>StorefrontComponent</td>
+                <td>Каталог, карусель, меню, Steam, покупка</td>
+              </tr>
+              <tr>
+                <td><code>/orders/:orderId</code></td>
+                <td>OrderComponent</td>
+                <td>Статус, симуляция оплаты, история, код</td>
+              </tr>
+              <tr>
+                <td><code>/admin</code></td>
+                <td>AdminComponent</td>
+                <td>Восстановление, режимы A/B, ключи, reset</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="explanations">
+            <article class="explanation pro">
+              <h3>Профессионально</h3>
+              <p>
+                Standalone components загружаются лениво через router. HttpClient получает серверный
+                каталог, signals хранят локальное состояние. Storefront удерживает idempotency
+                intent между повторами одной покупки. Order использует polling RxJS, пока заказ не
+                достиг терминального состояния. Admin добавляет <code>X-Admin-Token</code> только к
+                административным вызовам.
+              </p>
+            </article>
+            <article class="explanation kid">
+              <h3>Как для 10 лет</h3>
+              <p>
+                Первый экран — витрина, второй — электронный чек, который сам обновляется, третий —
+                пульт кладовщика. Angular меняет только нужные кусочки страницы, не перезагружая
+                весь сайт.
+              </p>
+            </article>
+          </div>
+          <p>
+            Код:
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/web/src/app/app.routes.ts"
+              >маршруты</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/web/src/app/storefront.component.ts#L25"
+              >витрина</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/web/src/app/order.component.ts#L17"
+              >заказ</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/web/src/app/admin.component.ts#L16"
+              >админка</a
+            >.
+          </p>
+          <details>
+            <summary>Контрольный вопрос: зачем polling на странице заказа?</summary>
+            <p>
+              Выдача асинхронна: HTTP создания уже завершён, worker продолжает работу. Периодический
+              GET показывает пользователю новые статусы и останавливается на терминальном состоянии.
+            </p>
+          </details>
+        </section>
+
+        <section id="recovery" class="searchable">
+          <h2>11. Восстановление после ошибок</h2>
+          <div class="explanations">
+            <article class="explanation pro">
+              <h3>Профессионально</h3>
+              <p>
+                Администратор видит заказы <code>out_of_stock</code> и <code>delivery_failed</code>.
+                После пополнения пула endpoint retry в транзакции блокирует заказ, проверяет
+                recoverable state, возвращает существующую delivery job в pending и сохраняет
+                стабильные provider request IDs. Повторное нажатие не создаёт вторую job благодаря
+                unique order relation.
+              </p>
+              <p>
+                Demo reset разрешён только при отсутствии processing jobs. Он удаляет изменяемые
+                demo-данные в порядке зависимостей и воспроизводит seed. Это административная
+                операция, защищённая токеном, а не публичный endpoint.
+              </p>
+            </article>
+            <article class="explanation kid">
+              <h3>Как для 10 лет</h3>
+              <p>
+                Если билеты закончились, заказ кладут на полку «нужна помощь». Кладовщик добавляет
+                билеты и снова запускает ту же карточку задания. Новую покупку не создают —
+                продолжают старую с прежними номерами.
+              </p>
+            </article>
+          </div>
+          <p>
+            Код:
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/api/src/shop.service.ts#L242"
+              >retryDelivery()</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/api/src/shop.service.ts#L296"
+              >resetDemo()</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/web/src/app/admin.component.ts#L30"
+              >управление из Angular</a
+            >.
+          </p>
+          <details>
+            <summary>Контрольный вопрос: почему retry переиспользует provider request ID?</summary>
+            <p>
+              Предыдущий вызов мог завершиться выдачей без ответа. Новый ID выглядел бы для
+              поставщика как новая операция; старый ID возвращает прежний результат.
+            </p>
+          </details>
+        </section>
+
+        <section id="operations" class="searchable">
+          <h2>12. Безопасность, логи, health и метрики</h2>
+          <div class="explanations">
+            <article class="explanation pro">
+              <h3>Профессионально</h3>
+              <p>
+                Helmet выставляет защитные HTTP-заголовки. AdminGuard работает fail-closed и
+                сравнивает <code>X-Admin-Token</code> с серверным секретом. Приложение не логирует
+                секретные заголовки; вместо этого структурированные JSON-логи связывают
+                <code>requestId</code>, <code>orderId</code>, <code>eventId</code> и
+                <code>providerRequestId</code>.
+              </p>
+              <p>
+                <code>/health/live</code> сообщает, что процесс жив; <code>/health/ready</code>
+                дополнительно проверяет БД. Metrics endpoint отдаёт счётчики дублей, outcomes,
+                retries/timeouts и gauges длины очередей. Они отвечают на вопрос «что происходит», а
+                история статусов — «что произошло с конкретным заказом».
+              </p>
+            </article>
+            <article class="explanation kid">
+              <h3>Как для 10 лет</h3>
+              <p>
+                Токен — ключ от служебной комнаты. Логи — дневник событий с номерами заказов. Health
+                — лампочки «сервер включён» и «база доступна». Метрики — приборная панель: сколько
+                карточек ждёт и сколько раз сеть подвела.
+              </p>
+            </article>
+          </div>
+          <p>
+            Код:
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/api/src/admin.guard.ts#L6"
+              >AdminGuard</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/api/src/main.ts#L14"
+              >bootstrap и логи</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/api/src/metrics.service.ts#L7"
+              >MetricsService</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/api/src/shop.controller.ts#L160"
+              >operations endpoints</a
+            >.
+          </p>
+          <details>
+            <summary>Контрольный вопрос: чем readiness отличается от liveness?</summary>
+            <p>
+              Liveness отвечает, работает ли процесс. Readiness — способен ли он обслуживать трафик,
+              включая доступность зависимостей вроде PostgreSQL.
+            </p>
+          </details>
+        </section>
+
+        <section id="testing" class="searchable">
+          <h2>13. Как тесты доказывают критерии приёмки</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Риск</th>
+                <th>Механизм</th>
+                <th>Доказательство</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Двойной клик</td>
+                <td>Один intent и Idempotency-Key, UNIQUE в orders</td>
+                <td>два ответа указывают на один заказ</td>
+              </tr>
+              <tr>
+                <td>50 одинаковых webhook</td>
+                <td>event_id UNIQUE</td>
+                <td>одна строка события и один fulfillment</td>
+              </tr>
+              <tr>
+                <td>50 разных paid</td>
+                <td>одна delivery job на order</td>
+                <td>50 событий, один потраченный ключ</td>
+              </tr>
+              <tr>
+                <td>Webhook раньше заказа</td>
+                <td>inbox без обязательного FK</td>
+                <td>pending становится applied после заказа</td>
+              </tr>
+              <tr>
+                <td>События не по порядку</td>
+                <td>state policy</td>
+                <td>paid приоритетнее failed, delivered не регрессирует</td>
+              </tr>
+              <tr>
+                <td>Timeout после выдачи</td>
+                <td>стабильный request_id</td>
+                <td>повтор возвращает тот же code</td>
+              </tr>
+              <tr>
+                <td>A пуст</td>
+                <td>fallback только после явного out-of-stock</td>
+                <td>код приходит из B</td>
+              </tr>
+              <tr>
+                <td>Оба пула пусты</td>
+                <td>доменный out_of_stock</td>
+                <td>API жив, заказ восстановим</td>
+              </tr>
+              <tr>
+                <td>Пополнение и retry</td>
+                <td>переиспользование job/request</td>
+                <td>ровно один delivered fulfillment</td>
+              </tr>
+              <tr>
+                <td>Лимит промокода N</td>
+                <td>FOR UPDATE на promo</td>
+                <td>успешных redemption не больше N</td>
+              </tr>
+              <tr>
+                <td>Подмена цены</td>
+                <td>серверный catalog snapshot</td>
+                <td>клиентская сумма не участвует</td>
+              </tr>
+              <tr>
+                <td>UI</td>
+                <td>Playwright</td>
+                <td>покупка, статус, responsive и интерактивы</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="explanations">
+            <article class="explanation pro">
+              <h3>Профессионально</h3>
+              <p>
+                Unit tests проверяют чистые domain rules. Integration/race suite работает с реальным
+                PostgreSQL и запускает параллельные HTTP-запросы, потому что мок базы не
+                воспроизводит locks и unique races. Playwright проверяет систему снаружи как
+                пользователь. CI затем повторяет lint, types, unit, build, race, E2E и Docker build
+                в чистом окружении.
+              </p>
+            </article>
+            <article class="explanation kid">
+              <h3>Как для 10 лет</h3>
+              <p>
+                Маленькие тесты проверяют каждое правило отдельно. Гоночные тесты выпускают к одной
+                двери 50 человек сразу. Браузерный робот нажимает настоящие кнопки. Если все три
+                уровня зелёные, мы проверили детали, давку и весь путь целиком.
+              </p>
+            </article>
+          </div>
+          <p>
+            Код:
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/tests/race/run.ts#L93"
+              >race-сценарии</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/tests/e2e/storefront.spec.ts"
+              >Playwright E2E</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/.github/workflows/ci.yml"
+              >CI pipeline</a
+            >.
+          </p>
+          <details>
+            <summary>Контрольный вопрос: почему гонки тестируются с настоящим PostgreSQL?</summary>
+            <p>
+              Correctness зависит от реальных транзакций, lock semantics и UNIQUE. In-memory mock
+              обычно выполняет операции последовательно и может дать ложное чувство безопасности.
+            </p>
+          </details>
+        </section>
+
+        <section id="deploy" class="searchable">
+          <h2>14. От исходников до production</h2>
+          <div class="flow">
+            <span>git push</span><b>→</b><span>CI</span><b>→</b><span>Docker image по SHA</span
+            ><b>→</b><span>migrate deploy</span><b>→</b><span>health-check</span><b>→</b
+            ><span>Nginx + HTTPS</span>
+          </div>
+          <div class="explanations">
+            <article class="explanation pro">
+              <h3>Профессионально</h3>
+              <p>
+                Multi-stage Dockerfile сначала собирает workspace, затем переносит production
+                dependencies, dist, Prisma schema и Angular assets в минимальный runtime. В
+                production Compose API также раздаёт Angular с одного origin; наружу публикуется
+                только localhost port приложения, а PostgreSQL/providers остаются во внутренней
+                сети.
+              </p>
+              <p>
+                Ручной deploy workflow использует immutable image digest/SHA, выполняет миграции до
+                переключения трафика и проверяет readiness. Secrets хранятся на сервере, не в Git.
+                Nginx завершает TLS и проксирует поддомен к локальному контейнеру.
+              </p>
+            </article>
+            <article class="explanation kid">
+              <h3>Как для 10 лет</h3>
+              <p>
+                Docker собирает подписанную коробку приложения. Робот сначала проверяет коробку,
+                сервер готовит таблицы, а потом включает новую версию. Nginx стоит у входа как
+                охранник: принимает безопасные HTTPS-письма и передаёт их приложению.
+              </p>
+            </article>
+          </div>
+          <p>
+            Код:
+            <a href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/Dockerfile"
+              >Dockerfile</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/compose.production.yaml"
+              >production Compose</a
+            >,
+            <a
+              href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/.github/workflows/deploy.yml"
+              >deploy workflow</a
+            >.
+          </p>
+          <details>
+            <summary>Контрольный вопрос: зачем image привязывается к SHA?</summary>
+            <p>
+              Тег вроде latest может начать указывать на другой образ. SHA однозначно связывает
+              production-бинарник с проверенным commit и делает rollback воспроизводимым.
+            </p>
+          </details>
+        </section>
+
+        <section id="codemap" class="searchable">
+          <h2>15. Code map: рабочие ссылки прямо на реализацию</h2>
+          <p>
+            Начинайте с «точки входа», затем переходите к бизнес-методу и модели данных. Ссылки
+            открывают текущую ветку <code>main</code> публичного репозитория; номера строк указывают
+            на начало ключевого блока.
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Задача</th>
+                <th>Открыть код</th>
+                <th>Что искать внутри</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Запуск API</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/api/src/main.ts#L14"
+                    >main.ts</a
+                  >
+                </td>
+                <td>Helmet, requestId, Swagger, static Angular</td>
+              </tr>
+              <tr>
+                <td>Маршруты API</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/api/src/shop.controller.ts#L46"
+                    >shop.controller.ts</a
+                  >
+                </td>
+                <td>HTTP-контракт и коды ответов</td>
+              </tr>
+              <tr>
+                <td>DTO и валидация</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/api/src/dto.ts#L5"
+                    >dto.ts</a
+                  >
+                </td>
+                <td>форма входных данных</td>
+              </tr>
+              <tr>
+                <td>Создать заказ</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/api/src/shop.service.ts#L64"
+                    >createOrder()</a
+                  >
+                </td>
+                <td>цена с сервера, promo lock, P2002 replay</td>
+              </tr>
+              <tr>
+                <td>Принять webhook</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/api/src/shop.service.ts#L186"
+                    >acceptWebhook()</a
+                  >
+                </td>
+                <td>durable insert и deduplication</td>
+              </tr>
+              <tr>
+                <td>Ручной retry</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/api/src/shop.service.ts#L242"
+                    >retryDelivery()</a
+                  >
+                </td>
+                <td>row lock и reuse job</td>
+              </tr>
+              <tr>
+                <td>Worker: payment</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/worker/src/worker.service.ts#L67"
+                    >processPaymentEvent()</a
+                  >
+                </td>
+                <td>early event, amount check, paid priority</td>
+              </tr>
+              <tr>
+                <td>Worker: очередь</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/worker/src/worker.service.ts#L153"
+                    >processDeliveryJob()</a
+                  >
+                </td>
+                <td>SKIP LOCKED, lease, HTTP вне transaction</td>
+              </tr>
+              <tr>
+                <td>Вызов поставщика</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/worker/src/worker.service.ts#L213"
+                    >callProvider()</a
+                  >
+                </td>
+                <td>request ID, timeout и fallback</td>
+              </tr>
+              <tr>
+                <td>Финальная выдача</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/worker/src/worker.service.ts#L292"
+                    >complete()</a
+                  >
+                </td>
+                <td>lock order, fulfillment, history</td>
+              </tr>
+              <tr>
+                <td>Mock provider</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/mock-provider/src/provider.service.ts#L20"
+                    >issue()</a
+                  >
+                </td>
+                <td>replay и атомарная резервация code</td>
+              </tr>
+              <tr>
+                <td>State machine</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/packages/domain/src/index.ts"
+                    >domain/index.ts</a
+                  >
+                </td>
+                <td>переходы, копейки, fingerprint</td>
+              </tr>
+              <tr>
+                <td>Схема БД</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/packages/database/prisma/schema.prisma#L91"
+                    >schema.prisma</a
+                  >
+                </td>
+                <td>relations, indexes, UNIQUE</td>
+              </tr>
+              <tr>
+                <td>Миграция</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/packages/database/prisma/migrations/20260831210000_init/migration.sql"
+                    >migration.sql</a
+                  >
+                </td>
+                <td>DDL и partial unique index</td>
+              </tr>
+              <tr>
+                <td>Seed</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/packages/database/prisma/seed.ts"
+                    >seed.ts</a
+                  >
+                </td>
+                <td>товары, promo, provider pools</td>
+              </tr>
+              <tr>
+                <td>Angular routes</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/web/src/app/app.routes.ts"
+                    >app.routes.ts</a
+                  >
+                </td>
+                <td>lazy standalone screens</td>
+              </tr>
+              <tr>
+                <td>Витрина</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/web/src/app/storefront.component.ts#L25"
+                    >storefront.component.ts</a
+                  >
+                </td>
+                <td>signals, catalog, purchase intent</td>
+              </tr>
+              <tr>
+                <td>Страница заказа</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/web/src/app/order.component.ts#L17"
+                    >order.component.ts</a
+                  >
+                </td>
+                <td>polling, simulator, status labels</td>
+              </tr>
+              <tr>
+                <td>Админка</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/apps/web/src/app/admin.component.ts#L16"
+                    >admin.component.ts</a
+                  >
+                </td>
+                <td>token header и recovery actions</td>
+              </tr>
+              <tr>
+                <td>Гоночные тесты</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/tests/race/run.ts#L93"
+                    >tests/race/run.ts</a
+                  >
+                </td>
+                <td>50 параллельных событий и promo limit</td>
+              </tr>
+              <tr>
+                <td>E2E браузер</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/tests/e2e/storefront.spec.ts"
+                    >storefront.spec.ts</a
+                  >
+                </td>
+                <td>double click и responsive layout</td>
+              </tr>
+              <tr>
+                <td>CI</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/.github/workflows/ci.yml"
+                    >ci.yml</a
+                  >
+                </td>
+                <td>полный quality gate</td>
+              </tr>
+              <tr>
+                <td>OpenAPI</td>
+                <td>
+                  <a
+                    href="https://github.com/komaroffsergei/fullstack-test-shop/blob/main/scripts/generate-openapi.ts#L2"
+                    >generate-openapi.ts</a
+                  >
+                </td>
+                <td>генерация зафиксированного контракта</td>
+              </tr>
+            </tbody>
+          </table>
+          <h3>Как читать один вертикальный срез</h3>
+          <ol>
+            <li>Откройте метод <code>buy()</code> витрины и найдите intent/key.</li>
+            <li>
+              Перейдите в OrdersController и DTO — так HTTP превращается в типизированный вызов.
+            </li>
+            <li>В <code>createOrder()</code> проследите транзакцию до модели Order.</li>
+            <li>В payment controller найдите реальный вызов webhook simulator.</li>
+            <li>В worker проследите event → job → provider → fulfillment.</li>
+            <li>Откройте race test и найдите автоматическое доказательство этой гарантии.</li>
+          </ol>
+        </section>
+
+        <section id="quiz" class="searchable">
+          <h2>16. Итоговый тест</h2>
+          <form id="quiz-form">
+            <fieldset class="quiz-question">
+              <legend>1. Где определяется окончательная цена заказа?</legend>
+              <label><input type="radio" name="q1" /> В DOM Angular</label>
+              <label
+                ><input type="radio" name="q1" data-correct="true" /> На API по серверному
+                каталогу</label
+              >
+              <label><input type="radio" name="q1" /> В mock-provider</label>
+            </fieldset>
+            <fieldset class="quiz-question">
+              <legend>2. Что означает timeout поставщика?</legend>
+              <label><input type="radio" name="q2" /> Операция точно не выполнена</label>
+              <label
+                ><input type="radio" name="q2" data-correct="true" /> Результат неизвестен</label
+              >
+              <label><input type="radio" name="q2" /> Ключ точно выдан дважды</label>
+            </fieldset>
+            <fieldset class="quiz-question">
+              <legend>3. Как повторить вызов после timeout-after-issue?</legend>
+              <label
+                ><input type="radio" name="q3" data-correct="true" /> Тому же provider с тем же
+                request_id</label
+              >
+              <label><input type="radio" name="q3" /> Provider B с новым request_id</label>
+              <label><input type="radio" name="q3" /> Создать новый заказ</label>
+            </fieldset>
+            <fieldset class="quiz-question">
+              <legend>4. Зачем webhook сохраняется до HTTP 200?</legend>
+              <label><input type="radio" name="q4" /> Чтобы страница стала красивее</label>
+              <label
+                ><input type="radio" name="q4" data-correct="true" /> Чтобы падение после ответа не
+                потеряло событие</label
+              >
+              <label><input type="radio" name="q4" /> Это требование Angular</label>
+            </fieldset>
+            <fieldset class="quiz-question">
+              <legend>5. Что делает SKIP LOCKED?</legend>
+              <label><input type="radio" name="q5" /> Удаляет занятые jobs</label>
+              <label
+                ><input type="radio" name="q5" data-correct="true" /> Позволяет worker взять другую
+                незанятую job</label
+              >
+              <label><input type="radio" name="q5" /> Отключает транзакции</label>
+            </fieldset>
+            <fieldset class="quiz-question">
+              <legend>6. Что физически запрещает два fulfillment одного заказа?</legend>
+              <label><input type="radio" name="q6" /> CSS</label>
+              <label
+                ><input type="radio" name="q6" data-correct="true" /> Транзакция и
+                UNIQUE(order_id)</label
+              >
+              <label><input type="radio" name="q6" /> Только комментарий в коде</label>
+            </fieldset>
+            <fieldset class="quiz-question">
+              <legend>7. Почему лимит промокода не превышается в гонке?</legend>
+              <label
+                ><input type="radio" name="q7" data-correct="true" /> Строка promo блокируется FOR
+                UPDATE</label
+              >
+              <label><input type="radio" name="q7" /> Браузер скрывает кнопку</label>
+              <label><input type="radio" name="q7" /> Все запросы случайно идут по очереди</label>
+            </fieldset>
+            <fieldset class="quiz-question">
+              <legend>8. Что случится с paid webhook, пришедшим до заказа?</legend>
+              <label><input type="radio" name="q8" /> Он безвозвратно удалится</label>
+              <label
+                ><input type="radio" name="q8" data-correct="true" /> Останется pending и применится
+                позже</label
+              >
+              <label><input type="radio" name="q8" /> Создаст товар</label>
+            </fieldset>
+            <button type="button" onclick="scoreQuiz()">Проверить ответы</button>
+            <p id="quiz-result" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <section id="glossary" class="searchable">
+          <h2>17. Короткий словарь</h2>
+          <dl>
+            <dt><strong>Идемпотентность</strong></dt>
+            <dd>Повтор одной операции не создаёт новый бизнес-результат.</dd>
+            <dt><strong>Инвариант</strong></dt>
+            <dd>Правило, которое остаётся истинным при любых допустимых действиях.</dd>
+            <dt><strong>Inbox</strong></dt>
+            <dd>Таблица для надёжного приёма внешних событий до их обработки.</dd>
+            <dt><strong>Lease</strong></dt>
+            <dd>Временное право worker обрабатывать job; истекает после сбоя.</dd>
+            <dt><strong>Race condition</strong></dt>
+            <dd>Ошибка, результат которой зависит от порядка параллельных действий.</dd>
+            <dt><strong>Row lock</strong></dt>
+            <dd>Временная блокировка строки БД внутри транзакции.</dd>
+            <dt><strong>Snapshot цены</strong></dt>
+            <dd>Цена и валюта, зафиксированные в момент создания заказа.</dd>
+            <dt><strong>Fulfillment</strong></dt>
+            <dd>Факт успешной выдачи цифрового кода конкретному заказу.</dd>
+            <dt><strong>Backoff</strong></dt>
+            <dd>Пауза перед следующим повтором после временной ошибки.</dd>
+            <dt><strong>DTO</strong></dt>
+            <dd>Явная форма данных, разрешённых на границе API.</dd>
+          </dl>
+          <div class="note">
+            Следующий практический шаг: выберите сценарий из таблицы приёмки, откройте связанные
+            строки в code map и поставьте breakpoint последовательно в API, worker и provider.
+          </div>
+        </section>
+
+        <footer>
+          Учебник хранится рядом с кодом и версионируется вместе с ним. Если строка кода сдвинулась,
+          обновите ссылку в code map в том же pull request.
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      const levelSelect = document.querySelector('#level');
+      const searchInput = document.querySelector('#search');
+
+      /** Переключает оба уровня объяснения и запоминает выбор только в браузере ученика. */
+      function setExplanationLevel(level) {
+        document.body.dataset.level = level;
+        localStorage.setItem('tutorial-level', level);
+      }
+
+      /** Скрывает учебные модули, в которых нет введённого текста. */
+      function applySearch(query) {
+        const normalized = query.trim().toLocaleLowerCase('ru');
+        document.querySelectorAll('.searchable').forEach((section) => {
+          section.classList.toggle(
+            'hidden-by-search',
+            normalized.length > 0 &&
+              !section.textContent.toLocaleLowerCase('ru').includes(normalized),
+          );
+        });
+      }
+
+      /** Считает итоговый результат по ответам, отмеченным атрибутом data-correct. */
+      function scoreQuiz() {
+        const questions = [...document.querySelectorAll('.quiz-question')];
+        const correct = questions.filter(
+          (question) => question.querySelector('input:checked')?.dataset.correct === 'true',
+        ).length;
+        const result = document.querySelector('#quiz-result');
+        result.textContent = `Результат: ${correct} из ${questions.length}. ${
+          correct === questions.length
+            ? 'Отлично: вы понимаете полный путь и гарантии системы.'
+            : 'Вернитесь к модулям, связанным с ошибочными ответами.'
+        }`;
+      }
+
+      levelSelect.addEventListener('change', (event) => setExplanationLevel(event.target.value));
+      searchInput.addEventListener('input', (event) => applySearch(event.target.value));
+      const savedLevel = localStorage.getItem('tutorial-level') ?? 'both';
+      levelSelect.value = savedLevel;
+      setExplanationLevel(savedLevel);
+    </script>
+  </body>
+</html>

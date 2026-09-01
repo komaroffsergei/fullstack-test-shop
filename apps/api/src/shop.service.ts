@@ -35,9 +35,12 @@ type LockedPromo = {
 };
 
 @Injectable()
+/** Сервис прикладных сценариев магазина: каталог, заказы, inbox, промокоды и recovery. */
 export class ShopService {
+  /** Получает реестр метрик через dependency injection NestJS. */
   constructor(private readonly metrics: MetricsService) {}
 
+  /** Возвращает только активные товары и переводит цену в удобный для UI read model. */
   async catalog() {
     const products = await prisma.product.findMany({
       where: { active: true },
@@ -54,22 +57,29 @@ export class ShopService {
     }));
   }
 
+  /**
+   * Создаёт заказ ровно один раз для одного Idempotency-Key.
+   * Цена, промокод и аудит фиксируются в одной короткой транзакции PostgreSQL.
+   */
   async createOrder(input: CreateOrderDto, idempotencyKey: string) {
     if (!idempotencyKey || idempotencyKey.length > 200) {
       throw new UnprocessableEntityException('Idempotency-Key is required');
     }
     const fingerprint = fingerprintOrder(input);
+    // Быстрый путь повторного запроса не открывает транзакцию.
     const existing = await prisma.order.findUnique({ where: { idempotencyKey } });
     if (existing) return this.validateReplay(existing, fingerprint);
 
     try {
       const created = await prisma.$transaction(async (tx) => {
+        // Клиент передаёт только SKU: доверенная цена всегда читается из каталога БД.
         const product = await tx.product.findUnique({ where: { sku: input.sku } });
         if (!product?.active) throw new NotFoundException('Product not found');
 
         let promo: LockedPromo | undefined;
         if (input.promoCode) {
           const normalized = input.promoCode.trim().toUpperCase();
+          // FOR UPDATE сериализует конкурирующие применения ограниченного промокода.
           [promo] = await tx.$queryRaw<LockedPromo[]>`
               SELECT id, code, type::text, value, currency, max_uses, used_count, active
               FROM promocodes WHERE code = ${normalized} FOR UPDATE
@@ -87,6 +97,7 @@ export class ShopService {
           product.priceMinor,
           promo ? { type: promo.type, value: promo.value } : undefined,
         );
+        // Сохраняем снимок денег в заказе: будущая смена каталога его уже не изменит.
         const order = await tx.order.create({
           data: {
             publicId: input.orderId,
@@ -101,6 +112,7 @@ export class ShopService {
           },
         });
         if (promo) {
+          // Redemption и счётчик создаются только вместе с новым заказом.
           await tx.promoRedemption.create({
             data: {
               promocodeId: promo.id,
@@ -117,6 +129,7 @@ export class ShopService {
       });
       return { replay: false, order: await this.order(created.publicId) };
     } catch (error) {
+      // При гонке двух INSERT уникальный индекс выбирает победителя, второй читает его результат.
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         const winner = await prisma.order.findUnique({ where: { idempotencyKey } });
         if (winner) return this.validateReplay(winner, fingerprint);
@@ -126,6 +139,7 @@ export class ShopService {
     }
   }
 
+  /** Сверяет payload повторного запроса и возвращает исходный заказ без побочных эффектов. */
   private async validateReplay(
     order: { publicId: string; idempotencyPayload: string },
     fingerprint: string,
@@ -136,6 +150,7 @@ export class ShopService {
     return { replay: true, order: await this.order(order.publicId) };
   }
 
+  /** Собирает публичное представление заказа вместе с кодом и полной историей статусов. */
   async order(publicId: string) {
     const order = await prisma.order.findUnique({
       where: { publicId },
@@ -164,6 +179,10 @@ export class ShopService {
     };
   }
 
+  /**
+   * Надёжно кладёт webhook в inbox до ответа HTTP 200.
+   * Связь с заказом намеренно проверит worker: событие может прийти раньше заказа.
+   */
   async acceptWebhook(event: PaymentWebhookDto) {
     try {
       await prisma.paymentEvent.create({
@@ -179,6 +198,7 @@ export class ShopService {
       });
       return { accepted: true, duplicate: false };
     } catch (error) {
+      // UNIQUE(event_id) превращает повторную доставку события в успешный no-op.
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         this.metrics.duplicateWebhooks.inc();
         return { accepted: true, duplicate: true };
@@ -187,6 +207,7 @@ export class ShopService {
     }
   }
 
+  /** Даёт предварительный серверный расчёт скидки, не резервируя использование промокода. */
   async quotePromo(input: QuotePromoDto) {
     const [product, promo] = await Promise.all([
       prisma.product.findUnique({ where: { sku: input.sku } }),
@@ -203,6 +224,7 @@ export class ShopService {
     };
   }
 
+  /** Возвращает только оплаченные заказы, которые администратор может восстановить. */
   async recoveryOrders() {
     const orders = await prisma.order.findMany({
       where: { status: { in: ['out_of_stock', 'delivery_failed'] } },
@@ -216,6 +238,7 @@ export class ShopService {
     }));
   }
 
+  /** Идемпотентно возвращает восстановимый заказ в очередь выдачи. */
   async retryDelivery(publicId: string) {
     return prisma.$transaction(async (tx) => {
       const order = await tx.order.findUnique({ where: { publicId } });
@@ -224,6 +247,7 @@ export class ShopService {
       if (!['out_of_stock', 'delivery_failed', 'paid'].includes(order.status)) {
         throw new ConflictException('Order is not recoverable');
       }
+      // UNIQUE(order_id) не разрешает создать вторую job для того же заказа.
       await tx.deliveryJob.upsert({
         where: { orderId: order.id },
         update: {
@@ -239,6 +263,7 @@ export class ShopService {
     });
   }
 
+  /** Добавляет очищенный от пустых значений и дублей набор кодов выбранному поставщику. */
   async addProviderKeys(input: AddProviderKeysDto) {
     const result = await prisma.providerKey.createMany({
       data: [...new Set(input.codes.map((code) => code.trim()).filter(Boolean))].map((code) => ({
@@ -251,6 +276,7 @@ export class ShopService {
     return { added: result.count };
   }
 
+  /** Настраивает детерминированный режим заглушки для воспроизведения отказов. */
   async setProviderMode(input: ProviderModeDto) {
     return prisma.providerSetting.upsert({
       where: { providerId: input.providerId as ProviderId },
@@ -263,9 +289,14 @@ export class ShopService {
     });
   }
 
+  /**
+   * Восстанавливает демо-состояние, но отказывается работать при активной выдаче.
+   * Это защищает reset от удаления данных из-под уже захваченной worker'ом job.
+   */
   async resetDemo() {
     const processing = await prisma.deliveryJob.count({ where: { status: 'processing' } });
     if (processing) throw new ServiceUnavailableException('Cannot reset while jobs are processing');
+    // Порядок удаления идёт от зависимых таблиц к родительским согласно внешним ключам.
     await prisma.$transaction(async (tx) => {
       await tx.providerCallAttempt.deleteMany();
       await tx.providerRequest.deleteMany();

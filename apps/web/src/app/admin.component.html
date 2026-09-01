@@ -1,3 +1,4 @@
+<!-- Служебная страница не хранит token и каждую команду отправляет с X-Admin-Token. -->
 <main class="admin-shell">
   <a routerLink="/">← В магазин</a>
   <header>
@@ -11,6 +12,7 @@
     <label>Admin token <input type="password" [(ngModel)]="token" (keyup.enter)="load()" /></label
     ><button type="button" (click)="load()">Обновить список</button><span>{{ message() }}</span>
   </section>
+  <!-- Recovery-список содержит только out_of_stock и delivery_failed. -->
   <section>
     <h2>Оплачены, но не выданы</h2>
     <div class="table">
@@ -27,6 +29,7 @@
       }
     </div>
   </section>
+  <!-- Детерминированные fault modes позволяют руками повторить все ловушки ТЗ. -->
   <section class="provider">
     <h2>Заглушки поставщиков</h2>
     <div class="controls">

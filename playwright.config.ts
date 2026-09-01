@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// Один конфиг обслуживает локальный webServer, CI-стек и внешний production smoke-test.
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: false,
@@ -11,6 +12,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  // При внешнем стенде Playwright не пытается запустить второй локальный dev server.
   webServer: process.env.PLAYWRIGHT_EXTERNAL_SERVER
     ? undefined
     : {

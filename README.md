@@ -65,6 +65,7 @@ pnpm test:e2e
 
 ## Навигация по проекту
 
+- [Интерактивный HTML-учебник](docs/tutorial/index.html) — подробный курс по стеку и всем критическим потокам, переключатель «профессионально / как для 10 лет», контрольные вопросы и code map с прямыми ссылками на GitHub.
 - [CODEMAP.md](CODEMAP.md) — entrypoints, модули, таблицы и карта тестов.
 - [docs/REQUIREMENTS_MATRIX.md](docs/REQUIREMENTS_MATRIX.md) — полное соответствие ТЗ.
 - [docs/FIDELITY_LEDGER.md](docs/FIDELITY_LEDGER.md) — сверка браузера с макетом.

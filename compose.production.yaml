@@ -1,3 +1,4 @@
+# Общий anchor гарантирует один immutable image и единое окружение для всех Node-процессов.
 x-app: &app
   image: ${IMAGE:-ghcr.io/komaroffsergei/fullstack-test-shop:latest}
   restart: unless-stopped
@@ -7,6 +8,7 @@ x-app: &app
       condition: service_healthy
 
 services:
+  # PostgreSQL не публикуется наружу и доступен только внутри Compose network.
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped
@@ -22,16 +24,19 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
+  # Единственная внешняя точка входа слушает только loopback VDS для Nginx upstream.
   app:
     <<: *app
     command: ['node', 'apps/api/dist/main.js']
     ports:
       - '127.0.0.1:4400:4000'
 
+  # Worker не открывает HTTP-порт и читает очередь прямо из PostgreSQL.
   worker:
     <<: *app
     command: ['node', 'apps/worker/dist/main.js']
 
+  # Две роли используют один образ, различаясь только PROVIDER_ID и внутренним портом.
   provider-a:
     <<: *app
     command: ['node', 'apps/mock-provider/dist/main.js']

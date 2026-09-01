@@ -1,3 +1,4 @@
+-- Полная исходная миграция PostgreSQL: типы, таблицы, связи и инварианты гонок.
 -- CreateSchema
 CREATE SCHEMA IF NOT EXISTS "public";
 
@@ -287,7 +288,7 @@ ALTER TABLE "promo_redemptions" ADD CONSTRAINT "promo_redemptions_promocode_id_f
 -- AddForeignKey
 ALTER TABLE "promo_redemptions" ADD CONSTRAINT "promo_redemptions_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
--- Domain invariants which Prisma cannot express.
+-- Доменные инварианты, которые Prisma schema выразить не может.
 ALTER TABLE "products" ADD CONSTRAINT "products_price_nonnegative" CHECK ("price_minor" >= 0);
 ALTER TABLE "orders" ADD CONSTRAINT "orders_money_consistent" CHECK (
   "base_price_minor" >= 0 AND "discount_minor" >= 0
@@ -303,6 +304,7 @@ ALTER TABLE "provider_keys" ADD CONSTRAINT "provider_keys_issue_pair" CHECK (
   OR ("issued_at" IS NOT NULL AND "request_id" IS NOT NULL)
 );
 
+-- Частичные индексы ускоряют именно рабочие выборки очередей, не раздувая индекс завершёнными строками.
 CREATE INDEX "payment_events_pending_idx" ON "payment_events" ("received_at", "id")
   WHERE "inbox_state" = 'pending';
 CREATE INDEX "delivery_jobs_runnable_idx" ON "delivery_jobs" ("run_after", "id")

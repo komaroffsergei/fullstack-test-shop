@@ -1,3 +1,4 @@
+<!-- Страница читает единый OrderDto и отражает изменения worker'а через polling компонента. -->
 <main class="page-shell">
   <a class="back" routerLink="/">← Вернуться в магазин</a>
   @if (error()) {
@@ -31,6 +32,7 @@
           </div>
         }
       </dl>
+      <!-- Симулятор показывается только до получения окончательного платёжного результата. -->
       @if (current.status === 'created') {
         <div class="actions">
           <button
@@ -45,6 +47,7 @@
           </button>
         </div>
       }
+      <!-- Код приходит только из серверного fulfillment и никогда не вычисляется в браузере. -->
       @if (current.code) {
         <div class="code-box">
           <span>Ваш код</span><strong>{{ current.code }}</strong
@@ -58,6 +61,7 @@
         </p>
       }
     </section>
+    <!-- Неизменяемый аудит помогает объяснить каждый переход конечного автомата. -->
     <section class="history">
       <h2>История</h2>
       @for (item of current.history; track item.createdAt) {

@@ -1,12 +1,15 @@
+# В build context не попадают Git-метаданные, секреты и локальные зависимости.
 .git
 .github
 .env*
 !.env.example
 node_modules
+**/node_modules
 **/dist
 **/.angular
 coverage
 playwright-report
 test-results
 release
+# Эталонные screenshots нужны в документации, но не в production image.
 docs/screenshots

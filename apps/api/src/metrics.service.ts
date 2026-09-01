@@ -3,6 +3,7 @@ import { Counter, Gauge, Registry, collectDefaultMetrics } from 'prom-client';
 import { prisma } from '@shop/database';
 
 @Injectable()
+/** Собирает технические и бизнес-метрики в отдельном Prometheus registry. */
 export class MetricsService {
   private readonly registry = new Registry();
   readonly duplicateWebhooks = new Counter({
@@ -33,11 +34,14 @@ export class MetricsService {
     registers: [this.registry],
   });
 
+  /** Подключает стандартные метрики Node.js с единым префиксом проекта. */
   constructor() {
     collectDefaultMetrics({ register: this.registry, prefix: 'shop_' });
   }
 
+  /** Перед отдачей метрик синхронизирует gauges с фактическим состоянием PostgreSQL. */
   async render(): Promise<string> {
+    // Независимые агрегаты выполняются параллельно, чтобы endpoint отвечал быстрее.
     const [count, outcomes, statuses, jobs] = await Promise.all([
       prisma.deliveryJob.count({ where: { status: { in: ['pending', 'retry'] } } }),
       prisma.providerCallAttempt.groupBy({ by: ['outcome'], _count: { _all: true } }),
@@ -45,6 +49,7 @@ export class MetricsService {
       prisma.deliveryJob.aggregate({ _sum: { attempts: true }, _count: { _all: true } }),
     ]);
     this.queueLength.set(count);
+    // Gauge сначала очищаются: исчезнувший label не должен оставаться со старым значением.
     this.providerAttempts.reset();
     for (const item of outcomes)
       this.providerAttempts.set({ outcome: item.outcome }, item._count._all);
@@ -54,6 +59,7 @@ export class MetricsService {
     return this.registry.metrics();
   }
 
+  /** Возвращает корректный Content-Type формата Prometheus. */
   get contentType(): string {
     return this.registry.contentType;
   }

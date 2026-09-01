@@ -7,4 +7,5 @@ import { RouterOutlet } from '@angular/router';
   template: '<router-outlet />',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/** Минимальная корневая оболочка, в которую Angular Router монтирует текущую страницу. */
 export class AppComponent {}

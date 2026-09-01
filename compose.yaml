@@ -1,4 +1,5 @@
 services:
+  # Локально нужен только PostgreSQL; приложения удобнее запускать через pnpm dev.
   postgres:
     image: postgres:17-alpine
     environment:
@@ -16,4 +17,5 @@ services:
       - shop-postgres:/var/lib/postgresql/data
 
 volumes:
+  # Именованный volume сохраняет данные между перезапусками контейнера.
   shop-postgres:

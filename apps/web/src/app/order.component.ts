@@ -13,6 +13,7 @@ import { interval, startWith, switchMap } from 'rxjs';
   styleUrl: './order.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/** Страница заказа: polling read model, симуляция оплаты и показ выданного кода. */
 export class OrderComponent {
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
@@ -21,7 +22,9 @@ export class OrderComponent {
   readonly actionPending = signal(false);
   readonly error = signal('');
 
+  /** Запускает polling статуса и автоматически прекращает его при уничтожении компонента. */
   constructor() {
+    // switchMap отменяет устаревший GET, если предыдущий ответ не успел прийти до нового тика.
     interval(650)
       .pipe(
         startWith(0),
@@ -34,6 +37,7 @@ export class OrderComponent {
       });
   }
 
+  /** Посылает команду учебному payment simulator и блокирует повторный клик до ответа. */
   simulate(status: 'paid' | 'failed'): void {
     if (this.actionPending()) return;
     this.actionPending.set(true);
@@ -46,6 +50,7 @@ export class OrderComponent {
     });
   }
 
+  /** Переводит машинный статус в понятную пользователю русскую формулировку. */
   label(status: OrderStatus): string {
     return (
       {
@@ -60,6 +65,7 @@ export class OrderComponent {
     )[status];
   }
 
+  /** Форматирует целые копейки для показа, не участвуя в бизнес-расчётах. */
   money(minor: number): string {
     return new Intl.NumberFormat('ru-RU', {
       style: 'currency',

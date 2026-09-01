@@ -1,5 +1,6 @@
 import { ProviderId } from '@prisma/client';
 
+// Воспроизводимый пул демонстрационных ключей используется и seed, и защищённым reset.
 export const INITIAL_PROVIDER_KEYS = [
   'LFXC-TNCS-BPCD',
   'P3EI-W8UO-9B4K',
@@ -53,6 +54,7 @@ export const INITIAL_PROVIDER_KEYS = [
   '7EQM-K09J-XKUO',
 ] as const;
 
+// Чередование A/B гарантирует, что оба поставщика получают одинаковый стартовый запас.
 export const INITIAL_PROVIDER_KEY_ROWS = INITIAL_PROVIDER_KEYS.map((code, index) => ({
   providerId: index % 2 === 0 ? ProviderId.A : ProviderId.B,
   sku: 'STEAM-TOPUP-500',

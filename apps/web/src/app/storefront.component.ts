@@ -21,6 +21,7 @@ type PurchaseIntent = { orderId: string; idempotencyKey: string; sku: string };
   styleUrl: './storefront.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/** Главная витрина: каталог, пять интерактивов и идемпотентное начало покупки. */
 export class StorefrontComponent implements OnInit, OnDestroy {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
@@ -67,7 +68,9 @@ export class StorefrontComponent implements OnInit, OnDestroy {
     ['TikTok', '/assets/tiktok.png'],
   ] as const;
 
+  /** Загружает серверный каталог и запускает автоматическую смену hero-слайда. */
   ngOnInit(): void {
+    // UI не содержит доверенных цен: карточки всегда строятся из ответа API.
     this.http.get<ProductDto[]>('/api/v1/catalog/products').subscribe({
       next: (products) => {
         this.products.set(products);
@@ -81,34 +84,45 @@ export class StorefrontComponent implements OnInit, OnDestroy {
     this.timer = setInterval(() => this.nextSlide(), 5_000);
   }
 
+  /** Освобождает браузерный timer, когда пользователь покидает витрину. */
   ngOnDestroy(): void {
     if (this.timer) clearInterval(this.timer);
   }
 
+  /** Закрывает выпадающий каталог при клике вне меню. */
   @HostListener('document:click')
   closeMenu(): void {
     this.menuOpen.set(false);
   }
 
+  /** Переключает меню и не даёт document listener немедленно закрыть его. */
   toggleMenu(event: Event): void {
     event.stopPropagation();
     this.menuOpen.update((open) => !open);
   }
 
+  /** Оставляет каталог открытым при взаимодействии внутри него. */
   keepMenuOpen(event: Event): void {
     event.stopPropagation();
   }
 
+  /** Циклически выбирает следующий рекламный слайд. */
   nextSlide(): void {
     this.activeSlide.update((current) => (current + 1) % this.slides.length);
   }
 
+  /** Циклически выбирает предыдущий рекламный слайд без отрицательного индекса. */
   previousSlide(): void {
     this.activeSlide.update((current) => (current - 1 + this.slides.length) % this.slides.length);
   }
 
+  /**
+   * Создаёт один purchase intent и переиспользует его при повторном/двойном клике.
+   * Новый UUID и Idempotency-Key появятся только при выборе другого SKU.
+   */
   buy(sku: string): void {
     if (this.buying()) return;
+    // Пара идентификаторов живёт дольше HTTP-попытки, поэтому retry безопасен.
     if (!this.purchaseIntent || this.purchaseIntent.sku !== sku) {
       this.purchaseIntent = {
         orderId: crypto.randomUUID(),
@@ -119,6 +133,7 @@ export class StorefrontComponent implements OnInit, OnDestroy {
     const intent = this.purchaseIntent;
     this.buying.set(sku);
     this.error.set('');
+    // Браузер не отправляет цену: API вычислит её по SKU и серверному каталогу.
     this.http
       .post<OrderDto>(
         '/api/v1/orders',
@@ -128,12 +143,14 @@ export class StorefrontComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (order) => void this.router.navigate(['/orders', order.orderId]),
         error: () => {
+          // Intent сохраняется: следующий клик повторит тот же безопасный запрос.
           this.error.set('Не удалось создать заказ. Повторите попытку — заказ не задвоится.');
           this.buying.set(null);
         },
       });
   }
 
+  /** Возвращает утверждённый общий asset карточки из макета. */
   productImage(): string {
     return '/assets/product-card.jpg';
   }

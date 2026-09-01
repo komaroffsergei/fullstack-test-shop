@@ -1,4 +1,5 @@
-// Generated surface is kept deliberately small; `pnpm openapi:generate` verifies it against OpenAPI.
+// Контракт frontend намеренно мал; `pnpm openapi:generate` сверяет наличие маршрутов с OpenAPI.
+/** Публичное представление товара, которое Angular получает из серверного каталога. */
 export type ProductDto = {
   sku: string;
   name: string;
@@ -9,6 +10,7 @@ export type ProductDto = {
   image: string;
 };
 
+/** Все статусы, которые frontend обязан уметь отобразить пользователю. */
 export type OrderStatus =
   | 'created'
   | 'paid'
@@ -18,6 +20,7 @@ export type OrderStatus =
   | 'out_of_stock'
   | 'delivery_failed';
 
+/** Полный read model заказа: цена-снимок, выдача и аудируемая история переходов. */
 export type OrderDto = {
   orderId: string;
   sku: string;

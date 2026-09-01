@@ -20,4 +20,5 @@ import { ShopService } from './shop.service';
   ],
   providers: [ShopService, MetricsService, AdminGuard],
 })
+/** Корневой composition root API: связывает HTTP-контроллеры и сервисы. */
 export class AppModule {}

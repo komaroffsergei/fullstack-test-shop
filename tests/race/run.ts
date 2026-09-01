@@ -4,12 +4,14 @@ import { prisma } from '../../packages/database/src/index.js';
 const baseUrl = process.env.BASE_URL ?? 'http://127.0.0.1:4000';
 const adminToken = process.env.ADMIN_TOKEN ?? 'change-me-locally';
 
+/** Выполняет JSON-запрос к живому API и возвращает вместе тело и HTTP-статус. */
 async function request<T>(path: string, init?: RequestInit): Promise<{ status: number; body: T }> {
   const response = await fetch(`${baseUrl}${path}`, init);
   const body = (await response.json()) as T;
   return { status: response.status, body };
 }
 
+/** Возвращает БД и mock-provider к воспроизводимому начальному состоянию. */
 async function reset(): Promise<void> {
   const result = await request('/api/v1/admin/demo/reset', {
     method: 'POST',
@@ -18,6 +20,7 @@ async function reset(): Promise<void> {
   if (result.status !== 201) throw new Error(`Demo reset failed: ${result.status}`);
 }
 
+/** Создаёт заказ; shared intent нужен для точной симуляции двойного клика. */
 async function createOrder(promoCode?: string, shared?: { orderId: string; key: string }) {
   const orderId = shared?.orderId ?? randomUUID();
   const key = shared?.key ?? randomUUID();
@@ -28,6 +31,7 @@ async function createOrder(promoCode?: string, shared?: { orderId: string; key: 
   });
 }
 
+/** Формирует реальное paid webhook-событие для заданного заказа. */
 function webhook(orderId: string, eventId: string, amount = 500) {
   return request('/api/v1/webhooks/payment', {
     method: 'POST',
@@ -43,20 +47,24 @@ function webhook(orderId: string, eventId: string, amount = 500) {
   });
 }
 
+/** Ожидает терминальный успех выдачи через общий polling helper. */
 async function waitDelivered(orderId: string): Promise<void> {
   await waitStatus(orderId, 'delivered');
 }
 
+/** Опросом ждёт статус с ограниченным deadline, чтобы зависание стало явным падением теста. */
 async function waitStatus(orderId: string, expected: string): Promise<void> {
   const deadline = Date.now() + 15_000;
   while (Date.now() < deadline) {
     const result = await request<{ status: string }>(`/api/v1/orders/${orderId}`);
     if (result.body.status === expected) return;
+    // Короткая пауза даёт worker'у работать и не создаёт busy loop.
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
   throw new Error(`Order ${orderId} did not reach ${expected} in time`);
 }
 
+/** Отправляет защищённую административную команду тестовому стенду. */
 function admin(path: string, body: unknown) {
   return request(path, {
     method: 'POST',
@@ -65,6 +73,7 @@ function admin(path: string, body: unknown) {
   });
 }
 
+/** Проверяет три независимых доказательства однократности: fulfillment, key и event count. */
 async function assertSingleIssue(orderId: string, expectedEvents: number): Promise<void> {
   const order = await prisma.order.findUniqueOrThrow({ where: { publicId: orderId } });
   const [fulfillments, events, requests] = await Promise.all([
@@ -80,9 +89,11 @@ async function assertSingleIssue(orderId: string, expectedEvents: number): Promi
   }
 }
 
+/** Последовательно запускает все состязательные критерии приёмки на реальном PostgreSQL. */
 async function main(): Promise<void> {
   await reset();
 
+  // Два конкурентных HTTP-запроса используют один intent, как настоящий dblclick.
   const intent = { orderId: randomUUID(), key: randomUUID() };
   const doubleClick = await Promise.all([
     createOrder(undefined, intent),
@@ -93,12 +104,14 @@ async function main(): Promise<void> {
   if (doubleClick[0].body.orderId !== doubleClick[1].body.orderId)
     throw new Error('Double click created two orders');
 
+  // UNIQUE(event_id) должен схлопнуть 50 доставок в одну запись inbox.
   const duplicateEventId = `evt_${randomUUID()}`;
   await Promise.all(Array.from({ length: 50 }, () => webhook(intent.orderId, duplicateEventId)));
   await waitDelivered(intent.orderId);
   await assertSingleIssue(intent.orderId, 1);
   console.log('✓ 50 identical webhooks: one event, one fulfillment, one key');
 
+  // 50 разных paid events сохраняются все, но job/fulfillment остаются единственными.
   const uniqueOrder = await createOrder();
   await Promise.all(
     Array.from({ length: 50 }, () => webhook(uniqueOrder.body.orderId, `evt_${randomUUID()}`)),
@@ -107,6 +120,7 @@ async function main(): Promise<void> {
   await assertSingleIssue(uniqueOrder.body.orderId, 50);
   console.log('✓ 50 unique paid events: one fulfillment, one key');
 
+  // FK на order отсутствует намеренно: ранний webhook переживает появление заказа.
   const earlyId = randomUUID();
   await webhook(earlyId, `evt_${randomUUID()}`);
   await createOrder(undefined, { orderId: earlyId, key: randomUUID() });
@@ -114,6 +128,7 @@ async function main(): Promise<void> {
   await assertSingleIssue(earlyId, 1);
   console.log('✓ early webhook is retained and applied after order creation');
 
+  // Пустые пулы переводят заказ в recovery, после пополнения retry завершается одним кодом.
   await reset();
   await prisma.providerKey.deleteMany();
   const emptyOrder = await createOrder();
@@ -129,6 +144,7 @@ async function main(): Promise<void> {
   await assertSingleIssue(emptyOrder.body.orderId, 1);
   console.log('✓ empty pools recover through top-up and idempotent manual retry');
 
+  // Timeout случается после резервирования; повтор обязан вернуть прежний код от A.
   await reset();
   await admin('/api/v1/admin/providers/mode', {
     providerId: 'A',
@@ -157,6 +173,7 @@ async function main(): Promise<void> {
   }
   console.log('✓ timeout-after-issue replays the same provider request and code');
 
+  // Только явный out_of_stock разрешает безопасно переключиться с A на B.
   await reset();
   await admin('/api/v1/admin/providers/mode', { providerId: 'A', mode: 'out_of_stock' });
   const fallbackOrder = await createOrder();
@@ -170,6 +187,7 @@ async function main(): Promise<void> {
     throw new Error('Provider B fallback was not used');
   console.log('✓ explicit Provider A out-of-stock safely falls back to B');
 
+  // Row lock промокода не даст 50 запросам превысить max_uses = 3.
   await reset();
   const promoResults = await Promise.all(Array.from({ length: 50 }, () => createOrder('LIMIT3')));
   const successful = promoResults.filter((result) => [200, 201].includes(result.status)).length;
@@ -181,6 +199,7 @@ async function main(): Promise<void> {
   );
 }
 
+// CLI всегда закрывает Prisma и возвращает ненулевой exit code при любой нарушенной гарантии.
 main()
   .then(() => prisma.$disconnect())
   .catch(async (error: unknown) => {

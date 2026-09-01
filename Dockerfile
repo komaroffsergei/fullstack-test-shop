@@ -1,14 +1,17 @@
+# Общий системный слой даёт Prisma одинаковые OpenSSL-библиотеки при generate и runtime.
 FROM node:22.22.2-bookworm-slim AS system
 RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates openssl \
   && rm -rf /var/lib/apt/lists/*
 
+# Базовый build-слой фиксирует версию pnpm через Corepack.
 FROM system AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable && corepack prepare pnpm@11.7.0 --activate
 WORKDIR /app
 
+# Сначала копируются только manifests: Docker cache не переустанавливает пакеты при правке кода.
 FROM base AS dependencies
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY apps/api/package.json apps/api/package.json
@@ -20,10 +23,12 @@ COPY packages/domain/package.json packages/domain/package.json
 COPY packages/api-client/package.json packages/api-client/package.json
 RUN pnpm install --frozen-lockfile
 
+# Builder генерирует Prisma Client и все четыре приложения monorepo.
 FROM dependencies AS builder
 COPY . .
 RUN pnpm db:generate && pnpm build
 
+# Финальный образ не содержит исходный workspace целиком и работает непривилегированным node.
 FROM system AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
@@ -34,6 +39,7 @@ COPY --from=builder /app/apps/worker/dist ./apps/worker/dist
 COPY --from=builder /app/apps/worker/node_modules ./apps/worker/node_modules
 COPY --from=builder /app/apps/mock-provider/dist ./apps/mock-provider/dist
 COPY --from=builder /app/apps/mock-provider/node_modules ./apps/mock-provider/node_modules
+# Angular кладётся в /app/public — именно этот путь раздаёт NestJS API.
 COPY --from=builder /app/apps/web/dist/web/browser ./public
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/apps/api/package.json ./apps/api/package.json

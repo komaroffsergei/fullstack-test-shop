@@ -12,6 +12,7 @@ type RecoveryOrder = { orderId: string; sku: string; status: string; updatedAt: 
   styleUrl: './admin.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/** Учебная админка восстановления, пополнения ключей и управления отказами. */
 export class AdminComponent {
   private readonly http = inject(HttpClient);
   token = '';
@@ -20,10 +21,12 @@ export class AdminComponent {
   codes = '';
   readonly orders = signal<RecoveryOrder[]>([]);
   readonly message = signal('Введите серверный admin token. Он не сохраняется.');
+  /** Создаёт заголовок авторизации только в памяти для текущего запроса. */
   private headers(): HttpHeaders {
     return new HttpHeaders({ 'X-Admin-Token': this.token });
   }
 
+  /** Загружает список оплаченных, но не выданных заказов. */
   load(): void {
     this.http
       .get<RecoveryOrder[]>('/api/v1/admin/recovery/orders', { headers: this.headers() })
@@ -36,18 +39,21 @@ export class AdminComponent {
       });
   }
 
+  /** Ставит существующую job заказа на безопасный повтор и обновляет список. */
   retry(orderId: string): void {
     this.http
       .post(`/api/v1/admin/orders/${orderId}/retry-delivery`, {}, { headers: this.headers() })
       .subscribe({
         next: () => {
           this.message.set('Повторная выдача поставлена в очередь');
+          // Небольшая пауза даёт worker'у время изменить состояние до повторного чтения.
           setTimeout(() => this.load(), 700);
         },
         error: () => this.message.set('Не удалось повторить выдачу'),
       });
   }
 
+  /** Переключает детерминированный fault mode выбранного поставщика. */
   setMode(): void {
     this.http
       .post(
@@ -61,7 +67,9 @@ export class AdminComponent {
       });
   }
 
+  /** Нормализует ввод из textarea и отправляет непустые коды в пул поставщика. */
   addKeys(): void {
+    // Администратор может разделять коды запятыми или переносами строк.
     const codes = this.codes
       .split(/[,\n]/)
       .map((item) => item.trim())
@@ -83,6 +91,7 @@ export class AdminComponent {
       });
   }
 
+  /** После явного подтверждения просит API восстановить исходные демо-данные. */
   reset(): void {
     if (!confirm('Сбросить все демо-заказы и использование промокодов?')) return;
     this.http.post('/api/v1/admin/demo/reset', {}, { headers: this.headers() }).subscribe({

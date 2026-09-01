@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 
+/** Проверяет пять обязательных интерактивов и полный путь от витрины до одного кода. */
 test('five required interactions and purchase flow', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
@@ -20,6 +21,7 @@ test('five required interactions and purchase flow', async ({ page }) => {
   await firstCard.hover();
   await expect(firstCard).toBeVisible();
 
+  // Настоящий dblclick доказывает frontend-блокировку и серверную идемпотентность вместе.
   await firstCard.getByRole('button', { name: 'Купить' }).dblclick();
   await expect(page).toHaveURL(/\/orders\/[0-9a-f-]{36}$/);
   await page.getByRole('button', { name: 'Оплатить успешно' }).click();
@@ -27,10 +29,12 @@ test('five required interactions and purchase flow', async ({ page }) => {
   await expect(page.locator('.code-box strong')).toHaveText(/[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}/);
 });
 
+/** Проверяет минимальную поддерживаемую ширину на отсутствие горизонтального overflow. */
 test('narrow viewport does not overflow horizontally', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  // Сравниваем геометрию корневого документа, а не субъективный screenshot.
   const dimensions = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth,

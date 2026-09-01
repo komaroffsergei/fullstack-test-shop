@@ -1,3 +1,4 @@
+// Prisma описывает типизированную модель; недоступные ему CHECK/partial index добавлены в SQL migration.
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,6 +8,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// Конечный автомат жизненного цикла заказа.
 enum OrderStatus {
   created
   paid
@@ -17,17 +19,20 @@ enum OrderStatus {
   delivery_failed
 }
 
+/// Допустимые исходы внешнего платёжного события.
 enum PaymentEventStatus {
   paid
   failed
 }
 
+/// Состояние durable inbox до/после обработки worker'ом.
 enum InboxState {
   pending
   processed
   invalid
 }
 
+/// Состояние PostgreSQL-очереди выдачи и её lease/retry цикла.
 enum JobStatus {
   pending
   processing
@@ -36,11 +41,13 @@ enum JobStatus {
   failed
 }
 
+/// Два независимых экземпляра одной заглушки поставщика.
 enum ProviderId {
   A
   B
 }
 
+/// Наблюдаемый результат каждой HTTP-попытки к поставщику.
 enum AttemptOutcome {
   success
   out_of_stock
@@ -49,11 +56,13 @@ enum AttemptOutcome {
   invalid_response
 }
 
+/// Процентная либо фиксированная скидка в минимальных денежных единицах.
 enum PromoType {
   percent
   amount
 }
 
+/// Детерминированные режимы отказа для проверки восстановления.
 enum ProviderFaultMode {
   success
   out_of_stock
@@ -61,6 +70,7 @@ enum ProviderFaultMode {
   timeout_after_issue
 }
 
+/// Серверный каталог — единственный доверенный источник цены и валюты.
 model Product {
   id         BigInt   @id @default(autoincrement())
   sku        String   @unique
@@ -77,6 +87,7 @@ model Product {
   @@map("products")
 }
 
+/// Заказ хранит публичный UUID, идемпотентность и неизменяемый снимок денег.
 model Order {
   id                 BigInt      @id @default(autoincrement())
   publicId           String      @unique @map("public_id") @db.Uuid
@@ -104,6 +115,7 @@ model Order {
   @@map("orders")
 }
 
+/// Inbox без FK на Order, чтобы легально сохранить webhook, пришедший раньше заказа.
 model PaymentEvent {
   id            BigInt             @id @default(autoincrement())
   eventId       String             @unique @map("event_id")
@@ -123,6 +135,7 @@ model PaymentEvent {
   @@map("payment_events")
 }
 
+/// Одна lease-задача на заказ; UNIQUE(orderId) не допускает второй выдачи.
 model DeliveryJob {
   id          BigInt    @id @default(autoincrement())
   orderId     BigInt    @unique @map("order_id")
@@ -140,6 +153,7 @@ model DeliveryJob {
   @@map("delivery_jobs")
 }
 
+/// Стабильный requestId на пару заказ/поставщик переживает timeout и retry.
 model ProviderRequest {
   id          BigInt     @id @default(autoincrement())
   orderId     BigInt     @map("order_id")
@@ -156,6 +170,7 @@ model ProviderRequest {
   @@map("provider_requests")
 }
 
+/// Неизменяемый журнал всех HTTP-попыток и их длительности.
 model ProviderCallAttempt {
   id                BigInt          @id @default(autoincrement())
   providerRequestId BigInt          @map("provider_request_id")
@@ -170,6 +185,7 @@ model ProviderCallAttempt {
   @@map("provider_call_attempts")
 }
 
+/// Финальная выдача: один код на заказ и один заказ на код.
 model Fulfillment {
   id         BigInt   @id @default(autoincrement())
   orderId    BigInt   @unique @map("order_id")
@@ -182,6 +198,7 @@ model Fulfillment {
   @@map("fulfillments")
 }
 
+/// Аудиторская лента причин всех переходов заказа.
 model OrderStatusHistory {
   id        BigInt      @id @default(autoincrement())
   orderId   BigInt      @map("order_id")
@@ -195,6 +212,7 @@ model OrderStatusHistory {
   @@map("order_status_history")
 }
 
+/// Промокод с конкурентно защищённым счётчиком использований.
 model Promocode {
   id           BigInt    @id @default(autoincrement())
   code         String    @unique
@@ -210,6 +228,7 @@ model Promocode {
   @@map("promocodes")
 }
 
+/// Факт применения промокода к одному конкретному заказу.
 model PromoRedemption {
   id            BigInt    @id @default(autoincrement())
   promocodeId   BigInt    @map("promocode_id")
@@ -223,6 +242,7 @@ model PromoRedemption {
   @@map("promo_redemptions")
 }
 
+/// Склад цифровых кодов; requestId атомарно закрепляется одновременно с issuedAt.
 model ProviderKey {
   id         BigInt     @id @default(autoincrement())
   providerId ProviderId @map("provider_id")
@@ -236,6 +256,7 @@ model ProviderKey {
   @@map("provider_keys")
 }
 
+/// Текущий fault mode каждой заглушки для ручных и автоматических тестов.
 model ProviderSetting {
   providerId ProviderId       @id @map("provider_id")
   faultMode  ProviderFaultMode @default(success) @map("fault_mode")
