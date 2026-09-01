@@ -1,5 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 
+// Один числовой ключ синхронизирует demo reset и короткие worker claims без блокировки таблиц.
+export const DEMO_RESET_ADVISORY_LOCK_ID = 1_947_208_314;
+
 // В development повторная загрузка модуля не должна создавать новый пул соединений Prisma.
 const globalForPrisma = globalThis as unknown as { shopPrisma?: PrismaClient };
 

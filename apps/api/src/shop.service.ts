@@ -6,6 +6,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import {
+  DEMO_RESET_ADVISORY_LOCK_ID,
   INITIAL_PROVIDER_KEY_ROWS,
   Prisma,
   ProviderFaultMode,
@@ -297,9 +298,8 @@ export class ShopService {
    */
   async resetDemo() {
     return prisma.$transaction(async (tx) => {
-      // Табличные locks закрывают гонку «проверили processing=0, а worker тут же захватил job».
-      // Порядок соответствует worker: inbox → order → job, поэтому не создаёт обратного lock order.
-      await tx.$executeRaw`LOCK TABLE payment_events, orders, delivery_jobs IN ACCESS EXCLUSIVE MODE`;
+      // Exclusive advisory lock ждёт окончания коротких worker claims и не блокирует чтение таблиц.
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(${DEMO_RESET_ADVISORY_LOCK_ID}) IS NULL AS acquired`;
       const processing = await tx.deliveryJob.count({ where: { status: 'processing' } });
       if (processing)
         throw new ServiceUnavailableException('Cannot reset while jobs are processing');

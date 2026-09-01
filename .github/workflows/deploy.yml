@@ -38,21 +38,63 @@ jobs:
             cd /opt/fullstack-test-shop
             # Сохраняем прежний image ID как локальную точку отката до переключения.
             previous=$(docker compose --env-file .env.production -f compose.production.yaml images -q app || true)
+            rollback() {
+              code=$?
+              trap - ERR
+              if [ -n "$previous" ]; then
+                docker tag "$previous" ghcr.io/komaroffsergei/fullstack-test-shop:rollback
+                IMAGE=ghcr.io/komaroffsergei/fullstack-test-shop:rollback docker compose --env-file .env.production -f compose.production.yaml up -d
+              else
+                docker compose --env-file .env.production -f compose.production.yaml stop app worker provider-a provider-b
+              fi
+              exit "$code"
+            }
+            trap rollback ERR
             export IMAGE
             docker compose --env-file .env.production -f compose.production.yaml pull
             docker compose --env-file .env.production -f compose.production.yaml run --rm app ./packages/database/node_modules/.bin/prisma migrate deploy --schema packages/database/prisma/schema.prisma
             docker compose --env-file .env.production -f compose.production.yaml run --rm app ./packages/database/node_modules/.bin/tsx packages/database/prisma/seed.ts
             docker compose --env-file .env.production -f compose.production.yaml up -d
             # Deployment успешен только после реального ready-check API и PostgreSQL.
+            ready=0
             for i in $(seq 1 30); do
-              if curl -fsS http://127.0.0.1:4400/api/health/ready; then exit 0; fi
+              if curl -fsS http://127.0.0.1:4400/api/health/ready; then ready=1; break; fi
               sleep 2
             done
-            # При неуспехе возвращаем весь app/worker/providers стек на один прежний образ.
-            if [ -n "$previous" ]; then
-              docker tag "$previous" ghcr.io/komaroffsergei/fullstack-test-shop:rollback
-              IMAGE=ghcr.io/komaroffsergei/fullstack-test-shop:rollback docker compose --env-file .env.production -f compose.production.yaml up -d
-            else
-              docker compose --env-file .env.production -f compose.production.yaml stop app worker provider-a provider-b
-            fi
-            exit 1
+            test "$ready" -eq 1
+            # Токен остаётся внутри server-only env; в test report попадают только безопасные факты.
+            docker compose --env-file .env.production -f compose.production.yaml run --rm \
+              -e ALLOW_DEMO_RESET=1 \
+              -e PRODUCTION_BASE_URL=https://test-shop.komaroff-dev.ru \
+              -e PRODUCTION_REPORT_PATH=/tmp/acceptance-production.json \
+              app ./node_modules/.bin/tsx tests/production/run.ts
+            trap - ERR
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.2
+      - run: corepack enable && corepack prepare pnpm@11.7.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Verify public storefront with Playwright
+        env:
+          PLAYWRIGHT_EXTERNAL_SERVER: '1'
+          WEB_URL: https://test-shop.komaroff-dev.ru
+        run: pnpm test:e2e
+      - name: Restore and verify deterministic demo seed
+        uses: appleboy/ssh-action@v1.2.2
+        env:
+          IMAGE: ghcr.io/komaroffsergei/fullstack-test-shop:${{ github.sha }}
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: shopdeploy
+          key: ${{ secrets.PROD_SSH_KEY }}
+          envs: IMAGE
+          script: |
+            set -Eeuo pipefail
+            cd /opt/fullstack-test-shop
+            export IMAGE
+            docker compose --env-file .env.production -f compose.production.yaml run --rm \
+              -e ALLOW_DEMO_RESET=1 \
+              -e PRODUCTION_FINAL_RESET_ONLY=1 \
+              -e PRODUCTION_BASE_URL=https://test-shop.komaroff-dev.ru \
+              app ./node_modules/.bin/tsx tests/production/run.ts

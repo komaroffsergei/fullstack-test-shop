@@ -1,5 +1,11 @@
 import { Injectable, OnApplicationShutdown, OnModuleInit } from '@nestjs/common';
-import { AttemptOutcome, OrderStatus, ProviderId, prisma } from '@shop/database';
+import {
+  AttemptOutcome,
+  DEMO_RESET_ADVISORY_LOCK_ID,
+  OrderStatus,
+  ProviderId,
+  prisma,
+} from '@shop/database';
 import { randomUUID } from 'node:crypto';
 
 type ClaimedEvent = {
@@ -66,6 +72,8 @@ export class WorkerService implements OnModuleInit, OnApplicationShutdown {
    */
   private async processPaymentEvent(): Promise<boolean> {
     const result = await prisma.$transaction(async (tx) => {
+      // Shared lock разрешает параллельных worker'ов, но не даёт reset удалить данные во время claim.
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock_shared(${DEMO_RESET_ADVISORY_LOCK_ID}) IS NULL AS acquired`;
       // SKIP LOCKED распределяет разные события между worker'ами без ожидания друг друга.
       const [event] = await tx.$queryRaw<ClaimedEvent[]>`
         SELECT pe.id, pe.event_id, pe.order_public_id, pe.status::text, pe.amount_minor, pe.currency
@@ -151,19 +159,24 @@ export class WorkerService implements OnModuleInit, OnApplicationShutdown {
 
   /** Захватывает одну задачу выдачи, вызывает поставщиков вне транзакции и завершает job. */
   private async processDeliveryJob(): Promise<boolean> {
-    // UPDATE ... RETURNING делает claim атомарным; истёкший lease позволяет восстановиться после crash.
-    const [job] = await prisma.$queryRaw<ClaimedJob[]>`
-      UPDATE delivery_jobs SET
-        status = 'processing', worker_id = ${this.workerId},
-        lease_until = now() + interval '30 seconds', attempts = attempts + 1, updated_at = now()
-      WHERE id = (
-        SELECT id FROM delivery_jobs
-        WHERE (status IN ('pending', 'retry') AND run_after <= now())
-           OR (status = 'processing' AND lease_until < now())
-        ORDER BY run_after, id LIMIT 1 FOR UPDATE SKIP LOCKED
-      )
-      RETURNING id, order_id, attempts
-    `;
+    const job = await prisma.$transaction(async (tx) => {
+      // Reset ждёт этот shared claim; после commit сеть снова вызывается уже без DB lock.
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock_shared(${DEMO_RESET_ADVISORY_LOCK_ID}) IS NULL AS acquired`;
+      // UPDATE ... RETURNING делает claim атомарным; истёкший lease восстанавливает job после crash.
+      const [claimed] = await tx.$queryRaw<ClaimedJob[]>`
+        UPDATE delivery_jobs SET
+          status = 'processing', worker_id = ${this.workerId},
+          lease_until = now() + interval '30 seconds', attempts = attempts + 1, updated_at = now()
+        WHERE id = (
+          SELECT id FROM delivery_jobs
+          WHERE (status IN ('pending', 'retry') AND run_after <= now())
+             OR (status = 'processing' AND lease_until < now())
+          ORDER BY run_after, id LIMIT 1 FOR UPDATE SKIP LOCKED
+        )
+        RETURNING id, order_id, attempts
+      `;
+      return claimed;
+    });
     if (!job) return false;
 
     // После короткого claim внешняя сеть вызывается уже без открытой БД-транзакции.

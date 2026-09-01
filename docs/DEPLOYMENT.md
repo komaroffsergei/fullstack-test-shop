@@ -26,7 +26,7 @@ server {
 
 ## Release workflow
 
-`.github/workflows/deploy.yml` вручную собирает образ, публикует `ghcr.io/...:<git SHA>`, подключается как `shopdeploy`, делает `prisma migrate deploy`, health-check и rollback к предыдущему image при ошибке.
+`.github/workflows/deploy.yml` вручную собирает образ, публикует `ghcr.io/...:<git SHA>`, подключается как `shopdeploy`, делает `prisma migrate deploy`, health-check, 9 production black-box сценариев, 3 внешних Playwright-теста и финальный reset. Ошибка deploy или server-side black-box запускает rollback к предыдущему image.
 
 Production secrets находятся только в `/opt/fullstack-test-shop/.env.production` и GitHub Actions secrets. Никаких panel/SSH/admin credentials в Git и workflow нет.
 
@@ -65,7 +65,10 @@ Production secrets находятся только в `/opt/fullstack-test-shop/
 8. Одноразовый container выполняет идемпотентный seed справочников.
 9. `docker compose up -d` переключает app/worker/providers.
 10. До 60 секунд опрашивается loopback readiness.
-11. При неуспехе старый ID получает локальный tag `rollback`, после чего стек возвращается на него.
+11. Одноразовый app-контейнер получает admin token только через server-only env и атакует публичный HTTPS девятью black-box сценариями.
+12. GitHub runner проходит три Playwright-сценария по публичному домену.
+13. Второй одноразовый app-контейнер делает reset и требует `recovery=0`, `ready=ok`.
+14. При ошибке до конца server-side проверки старый ID получает локальный tag `rollback`, после чего стек возвращается на него.
 
 Migration выполняется до health switch и должна быть backward-compatible с предыдущим image, иначе автоматический rollback приложения не откатит схему. Для destructive migrations нужен отдельный expand/migrate/contract процесс.
 
@@ -79,7 +82,7 @@ curl -fsS https://test-shop.komaroff-dev.ru/api/openapi.json
 curl -fsS https://test-shop.komaroff-dev.ru/api/metrics
 ```
 
-Затем обязательны `pnpm test:production` и production Playwright из [TESTING.md](TESTING.md). Простой health-check не доказывает выдачу или конкурентные инварианты.
+Workflow выполняет `pnpm test:production`, production Playwright и финальный reset автоматически. Команды из [TESTING.md](TESTING.md) остаются способом независимого повторного прогона. Простой health-check не доказывает выдачу или конкурентные инварианты.
 
 ## Диагностика без раскрытия секретов
 
@@ -112,4 +115,4 @@ docker compose --env-file .env.production -f compose.production.yaml logs --sinc
 
 ## Обновление документации
 
-Документация и тесты входят в repository/archive, но runtime image раздаёт только Angular build. Поэтому изменение только Markdown/offline handbook не меняет публичный UI; однако финальный submission SHA всё равно должен иметь зелёный CI и фиксироваться в ACCEPTANCE_REPORT.
+Документация входит в repository/archive, но не раздаётся runtime-приложением. В image дополнительно копируются только два маленьких production acceptance-модуля: это позволяет запускать их одноразовым контейнером рядом с server-only token, не вынося секрет с VDS. Изменение только Markdown/offline handbook не меняет публичный UI; однако финальный submission SHA всё равно должен иметь зелёный CI и фиксироваться в ACCEPTANCE_REPORT.

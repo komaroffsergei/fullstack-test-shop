@@ -55,7 +55,7 @@ docker build -t fullstack-test-shop:submission .
    curl -fsS https://test-shop.komaroff-dev.ru/api/health/ready
    ```
 
-2. Запустить production black-box с токеном из серверного secret store:
+2. Запустить production black-box. Основной путь — ручной Deploy workflow: ephemeral app-контейнер получает токен прямо из server-only `.env.production`. Для независимого прогона допустима команда:
 
    ```bash
    PRODUCTION_BASE_URL=https://test-shop.komaroff-dev.ru \
@@ -72,7 +72,7 @@ docker build -t fullstack-test-shop:submission .
    pnpm test:e2e
    ```
 
-4. Выполнить финальный защищённый reset и проверить пустой recovery list.
+4. Выполнить финальный защищённый reset и проверить пустой recovery list; Deploy workflow делает это автоматически после Playwright.
 5. Открыть Browser DevTools/логи: нет console/page errors, failed API или mixed content.
 6. Проверить desktop и 390×844 с открытым каталогом.
 

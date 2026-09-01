@@ -48,7 +48,7 @@
 | `pnpm typecheck`         | PASS                      | strict TypeScript прошёл во всех workspace и root scripts/tests              |
 | `pnpm comments:verify`   | PASS, **156/156**         | у каждого TS-метода/функции есть ведущий русский комментарий                 |
 | `pnpm test`              | PASS, **9/9**             | 8 domain unit-тестов и 1 Angular component test                              |
-| `pnpm docs:verify`       | PASS, **104 exact files** | offline handbook содержит байт-в-байт актуальный разрешённый source snapshot |
+| `pnpm docs:verify`       | PASS, **105 exact files** | offline handbook содержит байт-в-байт актуальный разрешённый source snapshot |
 | `pnpm build`             | PASS                      | API, worker, provider, Angular и packages собираются                         |
 | `pnpm openapi:generate`  | PASS, **14 paths**        | запущенный API публикует все ожидаемые операции                              |
 | `docker build`           | PASS                      | production Dockerfile собирается с frozen lockfile                           |
@@ -119,7 +119,7 @@ pnpm test:e2e
 
 ### Гонка demo reset с worker claim
 
-Между проверкой `processing=0` и очисткой таблиц worker теоретически мог захватить job. Reset переведён в короткую транзакцию с `ACCESS EXCLUSIVE` locks на inbox/orders/jobs и повторной проверкой внутри неё. Отдельный race-сценарий доказывает отказ reset при processing job и воспроизводимость seed после безопасного reset.
+Между проверкой `processing=0` и очисткой таблиц worker теоретически мог захватить job. Первый вариант с `ACCESS EXCLUSIVE` locks устранял гонку, но создавал лишнее давление на Prisma pool при долгой локальной watch-сессии. Финальное решение — транзакционный advisory RW-lock: короткие payment/job claims берут shared-lock, а reset берёт exclusive-lock, затем повторно проверяет `processing`. Параллельные worker’ы не блокируют друг друга, чтение таблиц не останавливается, но claim и очистка не пересекаются. Отдельный race-сценарий доказывает отказ reset при processing job и воспроизводимость seed после безопасного reset.
 
 ### Чистота локального test harness
 
@@ -147,4 +147,4 @@ pnpm test:e2e
 
 ## 10. Вердикт
 
-Локальная часть готова: **13/13 race, 3/3 Playwright, 9/9 unit/component, 156/156 comments, 104 exact offline source files, build/image smoke PASS**. Финальный вердикт `READY FOR SUBMISSION` будет выставлен только после зелёного CI, immutable deploy того же SHA, 9/9 black-box HTTPS, 3/3 production Playwright и финального reset.
+Локальная часть готова: **13/13 race, 3/3 Playwright, 9/9 unit/component, 156/156 comments, 105 exact offline source files, build/image smoke PASS**. Финальный вердикт `READY FOR SUBMISSION` будет выставлен только после зелёного CI, immutable deploy того же SHA, 9/9 black-box HTTPS, 3/3 production Playwright и финального reset.

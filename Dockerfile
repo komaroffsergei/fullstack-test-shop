@@ -45,6 +45,9 @@ COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
 COPY --from=builder /app/apps/worker/package.json ./apps/worker/package.json
 COPY --from=builder /app/apps/mock-provider/package.json ./apps/mock-provider/package.json
+# Production acceptance запускается одноразовым контейнером и не требует выносить admin token с VDS.
+COPY --from=builder /app/tests/production ./tests/production
+COPY --from=builder /app/tests/support ./tests/support
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 USER node

@@ -87,7 +87,7 @@
 | O-03 | Admin token                                                 | PASS   | Guard fail-closed; без header → 401; production token серверный                  |
 | O-04 | Liveness/readiness                                          | PASS   | `/api/health/live`; readiness выполняет реальный `SELECT 1`                      |
 | O-05 | Наблюдаемость                                               | PASS   | JSON HTTP/worker logs; Prometheus queue/events/status/retry/provider outcomes    |
-| O-06 | Безопасный reset                                            | PASS   | table locks не допускают claim между check/delete; processing job → 503          |
+| O-06 | Безопасный reset                                            | PASS   | advisory RW-lock не допускает claim между check/delete; processing job → 503     |
 | O-07 | Реальная PostgreSQL в race tests                            | PASS   | CI service PostgreSQL 17, никаких in-memory DB mocks                             |
 | O-08 | UI assets не сломаны                                        | PASS   | Playwright проверяет `complete && naturalWidth > 0` для всех 15 видимых images   |
 | O-09 | Узкий экран не ломается, хотя mobile design не обязателен   | PASS   | 390×844, открытый catalog, `scrollWidth <= clientWidth`                          |

@@ -137,7 +137,7 @@ PLAYWRIGHT_EXTERNAL_SERVER=1 WEB_URL=http://127.0.0.1:4200 pnpm test:e2e
 
 ## 6. Production black-box
 
-Production suite намеренно требует два явных условия: server token и подтверждение demo reset. Токен не записывается в отчёт и не выводится в stdout.
+Production suite намеренно требует два явных условия: server token и подтверждение demo reset. Токен не записывается в отчёт и не выводится в stdout. Официальный deploy запускает suite одноразовым контейнером на VDS: `ADMIN_TOKEN` читается из `.env.production` внутри Compose и не копируется на GitHub runner или рабочую машину.
 
 PowerShell:
 
@@ -179,7 +179,7 @@ WEB_URL=https://test-shop.komaroff-dev.ru \
 pnpm test:e2e
 ```
 
-После браузерной покупки рекомендуется ещё раз выполнить защищённый reset, чтобы оставить стенд в исходном состоянии.
+После браузерной покупки требуется ещё раз выполнить защищённый reset, чтобы оставить стенд в исходном состоянии. Deploy workflow делает это отдельным server-side шагом с `PRODUCTION_FINAL_RESET_ONLY=1` и одновременно требует пустой recovery list и зелёный readiness.
 
 ## 7. OpenAPI и offline documentation gates
 

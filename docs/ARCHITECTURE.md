@@ -142,7 +142,7 @@ HTTP или другие внешние вызовы внутри отсутст
 
 ### Reset
 
-Reset сначала получает ACCESS EXCLUSIVE locks в порядке `payment_events → orders → delivery_jobs`, затем проверяет отсутствие processing jobs. Это закрывает окно check-then-delete. Если worker уже захватил job, reset получает `503`, а не удаляет данные из-под внешнего вызова.
+Payment-event и delivery-job claim берут транзакционный `pg_advisory_xact_lock_shared`, а reset — соответствующий exclusive advisory lock. Поэтому несколько worker’ов продолжают claim-ить параллельно, обычное чтение таблиц не блокируется, но reset не может пройти между проверкой и новым claim. После получения exclusive-lock reset проверяет отсутствие processing jobs. Если worker уже успел захватить job и вышел к поставщику, reset получает `503`, а не удаляет данные из-под внешнего вызова.
 
 ## Политика внешних сбоев
 
@@ -179,6 +179,6 @@ Reset сначала получает ACCESS EXCLUSIVE locks в порядке `
 | worker crash                   | job lease                                      |
 | provider timeout after issue   | stable request ID + provider replay            |
 | два workers завершают одну job | order lock + fulfillment UNIQUE                |
-| небезопасный reset             | table locks + processing refusal               |
+| небезопасный reset             | advisory RW-lock + processing refusal          |
 
 Полная связь угроз с тестами находится в [REQUIREMENTS_MATRIX.md](REQUIREMENTS_MATRIX.md), фактические результаты — в [ACCEPTANCE_REPORT.md](ACCEPTANCE_REPORT.md).

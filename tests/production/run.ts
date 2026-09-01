@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { dirname } from 'node:path';
 import { loadEnvFile } from 'node:process';
 import { randomUUID } from 'node:crypto';
 import { LiveShopClient, assertCondition, newIntent } from '../support/live-shop.js';
@@ -10,6 +11,8 @@ if (!process.env.CI && existsSync('.env')) loadEnvFile('.env');
 const baseUrl = process.env.PRODUCTION_BASE_URL ?? 'https://test-shop.komaroff-dev.ru';
 const adminToken = process.env.PRODUCTION_ADMIN_TOKEN ?? process.env.ADMIN_TOKEN ?? '';
 const allowReset = process.env.ALLOW_DEMO_RESET === '1';
+const finalResetOnly = process.env.PRODUCTION_FINAL_RESET_ONLY === '1';
+const reportPath = process.env.PRODUCTION_REPORT_PATH ?? 'test-results/acceptance-production.json';
 const client = new LiveShopClient(baseUrl, adminToken);
 
 type Evidence = {
@@ -285,7 +288,7 @@ function errorMessage(error: unknown): string | null {
 
 /** Пишет машиночитаемый production-отчёт без admin token, кодов товаров и иных секретов. */
 async function writeReport(success: boolean, error?: unknown): Promise<void> {
-  await mkdir('test-results', { recursive: true });
+  await mkdir(dirname(reportPath), { recursive: true });
   const report = {
     target: baseUrl,
     startedAt,
@@ -294,10 +297,7 @@ async function writeReport(success: boolean, error?: unknown): Promise<void> {
     scenarios: evidence,
     error: errorMessage(error),
   };
-  await writeFile(
-    'test-results/acceptance-production.json',
-    `${JSON.stringify(report, null, 2)}\n`,
-  );
+  await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`);
 }
 
 /** Запускает полную destructive-demo проверку только при явном флаге и всегда возвращает seed. */
@@ -307,6 +307,21 @@ async function main(): Promise<void> {
     allowReset,
     'Set ALLOW_DEMO_RESET=1 to acknowledge deterministic reset of production demo data',
   );
+  // Отдельный post-Playwright режим не повторяет матрицу, а только возвращает и проверяет demo seed.
+  if (finalResetOnly) {
+    await client.reset();
+    const [recovery, ready] = await Promise.all([
+      client.adminGet<unknown[]>('/api/v1/admin/recovery/orders'),
+      client.json<{ status: string }>('/api/health/ready'),
+    ]);
+    assertCondition(
+      recovery.status === 200 && recovery.body.length === 0,
+      'Recovery list is not empty',
+    );
+    assertCondition(ready.status === 200 && ready.body.status === 'ok', 'Final ready check failed');
+    console.log('Production demo reset verified: recovery=0, ready=ok.');
+    return;
+  }
   try {
     await scenario(
       'HTTPS surface, health, catalog, OpenAPI, metrics and admin guard',
@@ -327,6 +342,12 @@ async function main(): Promise<void> {
     await writeReport(true);
     console.log(`\nProduction acceptance complete: ${evidence.length}/9 scenarios passed.`);
   } catch (error) {
+    // Даже неуспешная диагностика пытается вернуть чистый seed; исходную ошибку при этом не скрываем.
+    try {
+      await client.reset();
+    } catch (resetError) {
+      console.error(`Final recovery reset failed: ${errorMessage(resetError)}`);
+    }
     await writeReport(false, error);
     throw error;
   }
