@@ -13,6 +13,13 @@
 - Offline release: [v1.1.1 с чистым ZIP](https://github.com/komaroffsergei/fullstack-test-shop/releases/tag/v1.1.1)
 - CI: format, typed lint, strict typecheck (workspace + root), unit, 13-scenario race, E2E, OpenAPI, offline-doc verification, Docker runtime smoke и gitleaks.
 
+## Витрина
+
+![Fullstack Test Shop — каталог, пополнение Steam и карточки цифровых товаров](docs/screenshots/storefront.png)
+
+Экран работающего [демо магазина](https://test-shop.komaroff-dev.ru), снят 4 сентября 2026 года.
+На нём показаны каталог сервисов, форма пополнения Steam и карточки товаров.
+
 ## Быстрый запуск
 
 Нужны Node.js 22, pnpm 11 и Docker.
