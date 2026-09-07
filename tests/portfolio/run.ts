@@ -54,4 +54,12 @@ async function main(): Promise<void> {
     'Portfolio HTTP isolation, concurrent replay, expiry boundary, quotas and scoped reset passed',
   );
 }
-void main().finally(() => prisma.$disconnect());
+/** Закрывает соединение с БД даже при неуспешной проверке. */
+async function run(): Promise<void> {
+  try {
+    await main();
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+void run();
