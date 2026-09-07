@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { describe, expect, it } from 'vitest';
 import { AppComponent } from './app.component';
@@ -8,8 +10,16 @@ describe('AppComponent', () => {
   it('creates the Angular shell', async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent],
-      providers: [provideRouter([])],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
-    expect(TestBed.createComponent(AppComponent).componentInstance).toBeTruthy();
+    const fixture = TestBed.createComponent(AppComponent);
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/api/v1/demo/config').flush({ enabled: true });
+    fixture.detectChanges();
+    expect(fixture.componentInstance).toBeTruthy();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Демонстрационный режим: используются моки',
+    );
+    http.verify();
   });
 });
