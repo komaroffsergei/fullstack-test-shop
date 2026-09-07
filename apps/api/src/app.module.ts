@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { PortfolioCleanup, PortfolioController, PortfolioGuard } from './portfolio-demo';
 import { AdminGuard } from './admin.guard';
 import {
   AdminController,
@@ -17,8 +19,15 @@ import { ShopService } from './shop.service';
     PaymentsController,
     AdminController,
     OperationsController,
+    PortfolioController,
   ],
-  providers: [ShopService, MetricsService, AdminGuard],
+  providers: [
+    ShopService,
+    MetricsService,
+    AdminGuard,
+    PortfolioCleanup,
+    { provide: APP_GUARD, useClass: PortfolioGuard },
+  ],
 })
 /** Корневой composition root API: связывает HTTP-контроллеры и сервисы. */
 export class AppModule {}

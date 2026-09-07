@@ -63,6 +63,19 @@
     </section>
     <!-- Неизменяемый аудит помогает объяснить каждый переход конечного автомата. -->
     <section class="history">
+      @if (demo()) {
+        <div class="actions">
+          <button type="button" (click)="demoAction('replay')" [disabled]="actionPending()">
+            Повторить платёжное событие
+          </button>
+          @if (current.status === 'delivery_failed' || current.status === 'out_of_stock') {
+            <button type="button" (click)="demoAction('recover')" [disabled]="actionPending()">
+              Восстановить мой заказ
+            </button>
+          }
+        </div>
+        <p role="status">{{ demoMessage() }}</p>
+      }
       <h2>История</h2>
       @for (item of current.history; track item.createdAt) {
         <div>

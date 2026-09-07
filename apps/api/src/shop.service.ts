@@ -71,8 +71,32 @@ export class ShopService {
     const existing = await prisma.order.findUnique({ where: { idempotencyKey } });
     if (existing) return this.validateReplay(existing, fingerprint);
 
+    let replayed = false;
     try {
       const created = await prisma.$transaction(async (tx) => {
+        // Общая квота и квота сессии проверяются под одним lock, включая конкурентные INSERT.
+        if (process.env.PORTFOLIO_DEMO === 'true') {
+          if (!idempotencyKey.startsWith('portfolio:'))
+            throw new UnprocessableEntityException('Demo session is required');
+          await tx.$queryRaw`SELECT pg_advisory_xact_lock(7090701) IS NULL AS acquired`;
+          const ownerPrefix = idempotencyKey.split(':').slice(0, 2).join(':') + ':';
+          const replay = await tx.order.findUnique({ where: { idempotencyKey } });
+          if (replay) {
+            if (replay.idempotencyPayload !== fingerprint)
+              throw new ConflictException(
+                'Idempotency-Key was already used with a different request',
+              );
+            replayed = true;
+            return replay;
+          }
+          if (
+            (await tx.order.count({ where: { idempotencyKey: { startsWith: ownerPrefix } } })) >=
+              20 ||
+            (await tx.order.count({ where: { idempotencyKey: { startsWith: 'portfolio:' } } })) >=
+              1000
+          )
+            throw new ConflictException('Demo order limit reached');
+        }
         // Клиент передаёт только SKU: доверенная цена всегда читается из каталога БД.
         const product = await tx.product.findUnique({ where: { sku: input.sku } });
         if (!product?.active) throw new NotFoundException('Product not found');
@@ -128,7 +152,7 @@ export class ShopService {
         }
         return order;
       });
-      return { replay: false, order: await this.order(created.publicId) };
+      return { replay: replayed, order: await this.order(created.publicId) };
     } catch (error) {
       // При гонке двух INSERT уникальный индекс выбирает победителя, второй читает его результат.
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {

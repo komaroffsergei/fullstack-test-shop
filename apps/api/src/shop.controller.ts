@@ -26,6 +26,7 @@ import {
 } from './dto';
 import { MetricsService } from './metrics.service';
 import { ShopService } from './shop.service';
+import { internalDemoHeaders } from './portfolio-demo';
 
 /** Тонкий HTTP-адаптер публичного каталога. */
 @ApiTags('catalog')
@@ -100,7 +101,7 @@ export class PaymentsController {
     // Даже демо-оплата проходит тот же HTTP-контракт и inbox, что внешний эквайринг.
     const response = await fetch(`${base}/api/v1/webhooks/payment`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', ...internalDemoHeaders() },
       body: JSON.stringify(event),
       signal: AbortSignal.timeout(2_000),
     });

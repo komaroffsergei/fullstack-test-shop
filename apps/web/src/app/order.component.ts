@@ -21,9 +21,14 @@ export class OrderComponent {
   readonly order = signal<OrderDto | null>(null);
   readonly actionPending = signal(false);
   readonly error = signal('');
+  readonly demo = signal(false);
+  readonly demoMessage = signal('');
 
   /** Запускает polling статуса и автоматически прекращает его при уничтожении компонента. */
   constructor() {
+    this.http
+      .get<{ enabled: boolean }>('/api/v1/demo/config')
+      .subscribe({ next: (value) => this.demo.set(value.enabled) });
     // switchMap отменяет устаревший GET, если предыдущий ответ не успел прийти до нового тика.
     interval(650)
       .pipe(
@@ -46,6 +51,26 @@ export class OrderComponent {
       error: () => {
         this.error.set('Не удалось отправить платёжное событие');
         this.actionPending.set(false);
+      },
+    });
+  }
+
+  /** Повторяет сохранённое событие или выдачу только собственного заказа. */
+  demoAction(action: 'replay' | 'recover'): void {
+    if (this.actionPending()) return;
+    this.actionPending.set(true);
+    this.http.post(`/api/v1/demo/orders/${this.orderId}/${action}`, {}).subscribe({
+      next: () => {
+        this.actionPending.set(false);
+        this.demoMessage.set(
+          action === 'replay'
+            ? 'То же событие принято повторно. Выдача остаётся единственной.'
+            : 'Заказ возвращён в очередь выдачи.',
+        );
+      },
+      error: () => {
+        this.actionPending.set(false);
+        this.demoMessage.set('Действие пока недоступно: сначала выполните оплату.');
       },
     });
   }

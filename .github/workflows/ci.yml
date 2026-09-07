@@ -61,6 +61,11 @@ jobs:
       - run: pnpm test:race
       - run: pnpm openapi:generate
       - run: pnpm test:e2e
+      - name: Verify isolated portfolio API against PostgreSQL
+        run: |
+          PORTFOLIO_DEMO=true PORTFOLIO_SECRET=ci-only-secret-for-isolated-demo-tests PORT=4001 API_ORIGIN=http://127.0.0.1:4001 pnpm --filter @shop/api start > portfolio-api.log 2>&1 &
+          for i in {1..30}; do curl -fsS http://127.0.0.1:4001/api/health/ready && break; sleep 1; done
+          pnpm exec tsx tests/portfolio/run.ts
       - if: failure()
         uses: actions/upload-artifact@v4
         with:

@@ -28,6 +28,17 @@
 </header>
 
 <main class="shell">
+  @if (demo()) {
+    <section style="padding: 16px 0">
+      <button type="button" (click)="buy('STEAM-TOPUP-500', true)" [disabled]="!!buying()">
+        Попробовать сбой и восстановление заказа
+      </button>
+      <p>
+        Первая выдача этого заказа завершится управляемой ошибкой; повтор выполнит обычную цепочку
+        поставщиков.
+      </p>
+    </section>
+  }
   <!-- Интерактив №1–2: автоматическая/ручная карусель и выбор конкретного баннера. -->
   <section class="hero" aria-roledescription="carousel" aria-label="Предложения">
     <button

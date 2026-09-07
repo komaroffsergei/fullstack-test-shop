@@ -194,6 +194,15 @@ export class WorkerService implements OnModuleInit, OnApplicationShutdown {
     }
 
     await this.markDelivering(order.id, order.status);
+    // Управляемый отказ относится только к этому демо-заказу и первой попытке, не меняя поставщиков.
+    if (
+      process.env.PORTFOLIO_DEMO === 'true' &&
+      order.idempotencyKey.startsWith('portfolio:') &&
+      order.idempotencyKey.endsWith(':recover') &&
+      job.attempts === 1
+    ) {
+      return this.recoverable(job.id, order.id, 'delivery_failed');
+    }
     const resultA = await this.callProvider(order.id, order.publicId, order.sku, ProviderId.A);
     if (resultA.kind === 'ok') return this.complete(job.id, order.id, resultA);
     // Timeout неоднозначен: A мог выдать код, поэтому переключаться на B опасно.

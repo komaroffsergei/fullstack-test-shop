@@ -32,6 +32,7 @@ export class StorefrontComponent implements OnInit, OnDestroy {
   readonly loading = signal(true);
   readonly buying = signal<string | null>(null);
   readonly error = signal('');
+  readonly demo = signal(false);
   readonly menuOpen = signal(false);
   readonly activeSlide = signal(0);
   readonly currentSlide = computed(() => this.slides[this.activeSlide()] ?? this.slides[0]!);
@@ -70,6 +71,9 @@ export class StorefrontComponent implements OnInit, OnDestroy {
 
   /** Загружает серверный каталог и запускает автоматическую смену hero-слайда. */
   ngOnInit(): void {
+    this.http
+      .get<{ enabled: boolean }>('/api/v1/demo/config')
+      .subscribe({ next: (value) => this.demo.set(value.enabled) });
     // UI не содержит доверенных цен: карточки всегда строятся из ответа API.
     this.http.get<ProductDto[]>('/api/v1/catalog/products').subscribe({
       next: (products) => {
@@ -120,7 +124,7 @@ export class StorefrontComponent implements OnInit, OnDestroy {
    * Создаёт один purchase intent и переиспользует его при повторном/двойном клике.
    * Новый UUID и Idempotency-Key появятся только при выборе другого SKU.
    */
-  buy(sku: string): void {
+  buy(sku: string, recovery = false): void {
     if (this.buying()) return;
     // Пара идентификаторов живёт дольше HTTP-попытки, поэтому retry безопасен.
     if (!this.purchaseIntent || this.purchaseIntent.sku !== sku) {
@@ -138,7 +142,12 @@ export class StorefrontComponent implements OnInit, OnDestroy {
       .post<OrderDto>(
         '/api/v1/orders',
         { orderId: intent.orderId, sku: intent.sku },
-        { headers: { 'Idempotency-Key': intent.idempotencyKey } },
+        {
+          headers: {
+            'Idempotency-Key': intent.idempotencyKey,
+            ...(recovery ? { 'X-Demo-Scenario': 'recovery' } : {}),
+          },
+        },
       )
       .subscribe({
         next: (order) => void this.router.navigate(['/orders', order.orderId]),

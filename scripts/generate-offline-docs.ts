@@ -65,7 +65,7 @@ const concepts: Concept[] = [
   {
     title: 'Покупка в Angular',
     path: 'apps/web/src/app/storefront.component.ts',
-    needle: 'buy(sku: string)',
+    needle: 'buy(sku: string, recovery = false)',
     professional:
       'Компонент создаёт один purchase intent, удерживает UUID и Idempotency-Key между повторами и не отправляет цену.',
     child:
