@@ -39,23 +39,42 @@ jobs:
             cd /opt/fullstack-test-shop
             # Сохраняем прежний image ID как локальную точку отката до переключения.
             previous=$(docker compose --env-file .env.production -f compose.production.yaml images -q app || true)
+            override=$(mktemp)
+            write_override() {
+              cat > "$override" <<YAML
+            services:
+              app:
+                image: $1
+              worker:
+                image: $1
+              provider-a:
+                image: $1
+              provider-b:
+                image: $1
+            YAML
+            }
+            compose() {
+              docker compose --env-file .env.production -f compose.production.yaml -f "$override" "$@"
+            }
             rollback() {
               code=$?
               trap - ERR
               if [ -n "$previous" ]; then
                 docker tag "$previous" ghcr.io/komaroffsergei/fullstack-test-shop:rollback
-                IMAGE=ghcr.io/komaroffsergei/fullstack-test-shop:rollback docker compose --env-file .env.production -f compose.production.yaml up -d
+                write_override ghcr.io/komaroffsergei/fullstack-test-shop:rollback
+                compose up -d --no-deps --force-recreate app worker provider-a provider-b
               else
-                docker compose --env-file .env.production -f compose.production.yaml stop app worker provider-a provider-b
+                compose stop app worker provider-a provider-b
               fi
+              rm -f "$override"
               exit "$code"
             }
             trap rollback ERR
-            export IMAGE
-            docker compose --env-file .env.production -f compose.production.yaml pull
-            docker compose --env-file .env.production -f compose.production.yaml run --rm app ./packages/database/node_modules/.bin/prisma migrate deploy --schema packages/database/prisma/schema.prisma
-            docker compose --env-file .env.production -f compose.production.yaml run --rm app ./packages/database/node_modules/.bin/tsx packages/database/prisma/seed.ts
-            docker compose --env-file .env.production -f compose.production.yaml up -d
+            write_override "$IMAGE"
+            compose pull app worker provider-a provider-b
+            compose run --rm app ./packages/database/node_modules/.bin/prisma migrate deploy --schema packages/database/prisma/schema.prisma
+            compose run --rm app ./packages/database/node_modules/.bin/tsx packages/database/prisma/seed.ts
+            compose up -d --no-deps --force-recreate app worker provider-a provider-b
             # Deployment успешен только после реального ready-check API и PostgreSQL.
             ready=0
             for i in $(seq 1 30); do
@@ -64,12 +83,13 @@ jobs:
             done
             test "$ready" -eq 1
             # Токен остаётся внутри server-only env; в test report попадают только безопасные факты.
-            docker compose --env-file .env.production -f compose.production.yaml run --rm \
+            compose run --rm \
               -e ALLOW_DEMO_RESET=1 \
               -e PRODUCTION_BASE_URL=https://test-shop.komaroff-dev.ru \
               -e PRODUCTION_REPORT_PATH=/tmp/acceptance-production.json \
               app ./node_modules/.bin/tsx tests/production/run.ts
             trap - ERR
+            rm -f "$override"
       - uses: actions/setup-node@v4
         with:
           node-version: 22.22.2
@@ -94,8 +114,14 @@ jobs:
           script: |
             set -Eeuo pipefail
             cd /opt/fullstack-test-shop
-            export IMAGE
-            docker compose --env-file .env.production -f compose.production.yaml run --rm \
+            override=$(mktemp)
+            trap 'rm -f "$override"' EXIT
+            cat > "$override" <<YAML
+            services:
+              app:
+                image: $IMAGE
+            YAML
+            docker compose --env-file .env.production -f compose.production.yaml -f "$override" run --rm \
               -e ALLOW_DEMO_RESET=1 \
               -e PRODUCTION_FINAL_RESET_ONLY=1 \
               -e PRODUCTION_BASE_URL=https://test-shop.komaroff-dev.ru \
