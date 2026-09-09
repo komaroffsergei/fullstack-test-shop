@@ -23,8 +23,8 @@ type Evidence = {
 const evidence: Evidence[] = [];
 const startedAt = new Date().toISOString();
 
-/** Выполняет всю нагрузочную выборку короткими параллельными пачками под бюджет небольшой VPS. */
-async function inBatches<T>(tasks: Array<() => Promise<T>>, size = 10): Promise<T[]> {
+/** Выполняет production-smoke короткими параллельными парами под бюджет небольшой VPS. */
+async function inBatches<T>(tasks: Array<() => Promise<T>>, size = 2): Promise<T[]> {
   const results: T[] = [];
   for (let index = 0; index < tasks.length; index += size) {
     results.push(...(await Promise.all(tasks.slice(index, index + size).map((task) => task()))));
@@ -133,14 +133,14 @@ async function verifyIdempotency(): Promise<Record<string, string | number | boo
   };
 }
 
-/** Отправляет 50 одинаковых и 50 разных paid webhook на публичный HTTPS API. */
+/** Отправляет по 10 одинаковых и разных paid webhook; 50-поточный race остаётся в CI. */
 async function verifyWebhookRaces(): Promise<Record<string, string | number | boolean>> {
   await client.reset();
   const duplicateOrder = await client.createOrder();
   const eventId = `evt_${randomUUID()}`;
   const duplicates = await inBatches(
     Array.from(
-      { length: 50 },
+      { length: 10 },
       () => () => client.webhook({ orderId: duplicateOrder.body.orderId, eventId }),
     ),
   );
@@ -154,9 +154,10 @@ async function verifyWebhookRaces(): Promise<Record<string, string | number | bo
     code: first.code,
     history: first.history,
   });
-  await Promise.all(
-    Array.from({ length: 10 }, () =>
-      client.webhook({ orderId: duplicateOrder.body.orderId, eventId }),
+  await inBatches(
+    Array.from(
+      { length: 4 },
+      () => () => client.webhook({ orderId: duplicateOrder.body.orderId, eventId }),
     ),
   );
   await new Promise((resolve) => setTimeout(resolve, 300));
@@ -169,7 +170,7 @@ async function verifyWebhookRaces(): Promise<Record<string, string | number | bo
 
   const uniqueOrder = await client.createOrder();
   const unique = await inBatches(
-    Array.from({ length: 50 }, () => () => client.webhook({ orderId: uniqueOrder.body.orderId })),
+    Array.from({ length: 10 }, () => () => client.webhook({ orderId: uniqueOrder.body.orderId })),
   );
   assertCondition(
     unique.every((item) => item.status === 200),
@@ -307,15 +308,15 @@ async function verifyProviderFailure(): Promise<Record<string, string | number |
   };
 }
 
-/** Атакует LIMIT3 пятьюдесятью HTTPS-заказами партиями по 10 и требует 3 успеха/47 конфликтов. */
+/** Проверяет LIMIT3 десятью HTTPS-заказами парами и требует ровно 3 успеха/7 конфликтов. */
 async function verifyPromoRace(): Promise<Record<string, string | number | boolean>> {
   await client.reset();
   const attempts = await inBatches(
-    Array.from({ length: 50 }, () => () => client.createOrder({ promoCode: 'LIMIT3' })),
+    Array.from({ length: 10 }, () => () => client.createOrder({ promoCode: 'LIMIT3' })),
   );
   const successes = attempts.filter((item) => item.status === 201).length;
   const conflicts = attempts.filter((item) => item.status === 409).length;
-  assertCondition(successes === 3 && conflicts === 47, `Promo race: ${successes}/${conflicts}`);
+  assertCondition(successes === 3 && conflicts === 7, `Promo race: ${successes}/${conflicts}`);
   return { requests: attempts.length, successes, conflicts, maxUses: 3 };
 }
 
