@@ -40,6 +40,8 @@ export function newIntent(): PurchaseIntent {
  * Он намеренно общается только по публичным HTTP-контрактам и не подменяет приложение моками.
  */
 export class LiveShopClient {
+  private cookie = '';
+
   /** Нормализует origin и сохраняет admin token только в памяти текущего тестового процесса. */
   constructor(
     readonly baseUrl: string,
@@ -48,9 +50,19 @@ export class LiveShopClient {
     this.baseUrl = baseUrl.replace(/\/$/, '');
   }
 
+  /** Сохраняет подписанную portfolio-cookie и повторяет поведение одной браузерной сессии. */
+  private async request(path: string, init?: RequestInit): Promise<Response> {
+    const headers = new Headers(init?.headers);
+    if (this.cookie) headers.set('cookie', this.cookie);
+    const response = await fetch(`${this.baseUrl}${path}`, { ...init, headers });
+    const setCookie = response.headers.getSetCookie()[0];
+    if (setCookie) this.cookie = setCookie.split(';')[0] ?? '';
+    return response;
+  }
+
   /** Выполняет HTTP-запрос и безопасно разбирает JSON даже для ответов об ошибке. */
   async json<T>(path: string, init?: RequestInit): Promise<HttpResult<T>> {
-    const response = await fetch(`${this.baseUrl}${path}`, init);
+    const response = await this.request(path, init);
     const text = await response.text();
     let body: T;
     try {
@@ -63,7 +75,7 @@ export class LiveShopClient {
 
   /** Возвращает сырой текст для Prometheus и других не-JSON endpoints. */
   async text(path: string, init?: RequestInit): Promise<HttpResult<string>> {
-    const response = await fetch(`${this.baseUrl}${path}`, init);
+    const response = await this.request(path, init);
     return { status: response.status, body: await response.text(), headers: response.headers };
   }
 
