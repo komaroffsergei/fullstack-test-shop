@@ -107,7 +107,10 @@ async function verifyIdempotency(): Promise<Record<string, string | number | boo
     client.createOrder({ intent }),
   ]);
   const statuses = clicks.map((item) => item.status).sort();
-  assertCondition(statuses[0] === 200 && statuses[1] === 201, 'Double click is not idempotent');
+  assertCondition(
+    statuses[0] === 200 && statuses[1] === 201,
+    `Double click is not idempotent: received ${statuses.join(', ')}`,
+  );
   const conflict = await client.createOrder({ intent, sku: 'STEAM-TOPUP-1000' });
   const tamper = await client.createOrder({ extraBody: { finalPriceMinor: 1 } });
   assertCondition(conflict.status === 409, 'Changed replay payload was accepted');

@@ -41,6 +41,7 @@ export function newIntent(): PurchaseIntent {
  */
 export class LiveShopClient {
   private cookie = '';
+  private sessionPromise: Promise<void> | undefined;
 
   /** Нормализует origin и сохраняет admin token только в памяти текущего тестового процесса. */
   constructor(
@@ -50,13 +51,32 @@ export class LiveShopClient {
     this.baseUrl = baseUrl.replace(/\/$/, '');
   }
 
+  /** Запоминает только пару name=value, достаточную для следующих запросов этой сессии. */
+  private rememberCookie(response: Response): void {
+    const setCookie =
+      response.headers.getSetCookie()[0] ?? response.headers.get('set-cookie') ?? '';
+    if (setCookie) this.cookie = setCookie.split(';')[0] ?? '';
+  }
+
+  /**
+   * Один раз последовательно открывает portfolio-сессию до любых параллельных запросов.
+   * Иначе несколько первых fetch могут получить разные cookie и разрушить смысл race-тестов.
+   */
+  private ensureSession(): Promise<void> {
+    this.sessionPromise ??= fetch(`${this.baseUrl}/api/health/live`).then(async (response) => {
+      this.rememberCookie(response);
+      await response.arrayBuffer();
+    });
+    return this.sessionPromise;
+  }
+
   /** Сохраняет подписанную portfolio-cookie и повторяет поведение одной браузерной сессии. */
   private async request(path: string, init?: RequestInit): Promise<Response> {
+    await this.ensureSession();
     const headers = new Headers(init?.headers);
     if (this.cookie) headers.set('cookie', this.cookie);
     const response = await fetch(`${this.baseUrl}${path}`, { ...init, headers });
-    const setCookie = response.headers.getSetCookie()[0];
-    if (setCookie) this.cookie = setCookie.split(';')[0] ?? '';
+    this.rememberCookie(response);
     return response;
   }
 
