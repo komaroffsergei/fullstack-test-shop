@@ -71,7 +71,8 @@ jobs:
             }
             trap rollback ERR
             write_override "$IMAGE"
-            compose pull app worker provider-a provider-b
+            # Старый server-side Compose может содержать pull_policy: never; точный SHA тянем напрямую.
+            docker pull "$IMAGE"
             compose run --rm app ./packages/database/node_modules/.bin/prisma migrate deploy --schema packages/database/prisma/schema.prisma
             compose run --rm app ./packages/database/node_modules/.bin/tsx packages/database/prisma/seed.ts
             compose up -d --no-deps --force-recreate app worker provider-a provider-b
