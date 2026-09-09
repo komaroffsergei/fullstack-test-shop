@@ -23,6 +23,15 @@ type Evidence = {
 const evidence: Evidence[] = [];
 const startedAt = new Date().toISOString();
 
+/** Выполняет всю нагрузочную выборку короткими параллельными пачками под бюджет небольшой VPS. */
+async function inBatches<T>(tasks: Array<() => Promise<T>>, size = 10): Promise<T[]> {
+  const results: T[] = [];
+  for (let index = 0; index < tasks.length; index += size) {
+    results.push(...(await Promise.all(tasks.slice(index, index + size).map((task) => task()))));
+  }
+  return results;
+}
+
 /** Выполняет именованную production-проверку и сохраняет только несекретные факты приемки. */
 async function scenario(
   name: string,
@@ -129,9 +138,10 @@ async function verifyWebhookRaces(): Promise<Record<string, string | number | bo
   await client.reset();
   const duplicateOrder = await client.createOrder();
   const eventId = `evt_${randomUUID()}`;
-  const duplicates = await Promise.all(
-    Array.from({ length: 50 }, () =>
-      client.webhook({ orderId: duplicateOrder.body.orderId, eventId }),
+  const duplicates = await inBatches(
+    Array.from(
+      { length: 50 },
+      () => () => client.webhook({ orderId: duplicateOrder.body.orderId, eventId }),
     ),
   );
   assertCondition(
@@ -158,8 +168,8 @@ async function verifyWebhookRaces(): Promise<Record<string, string | number | bo
   );
 
   const uniqueOrder = await client.createOrder();
-  const unique = await Promise.all(
-    Array.from({ length: 50 }, () => client.webhook({ orderId: uniqueOrder.body.orderId })),
+  const unique = await inBatches(
+    Array.from({ length: 50 }, () => () => client.webhook({ orderId: uniqueOrder.body.orderId })),
   );
   assertCondition(
     unique.every((item) => item.status === 200),
@@ -297,11 +307,11 @@ async function verifyProviderFailure(): Promise<Record<string, string | number |
   };
 }
 
-/** Атакует LIMIT3 пятьюдесятью HTTPS-заказами и требует ровно 3 успеха/47 конфликтов. */
+/** Атакует LIMIT3 пятьюдесятью HTTPS-заказами партиями по 10 и требует 3 успеха/47 конфликтов. */
 async function verifyPromoRace(): Promise<Record<string, string | number | boolean>> {
   await client.reset();
-  const attempts = await Promise.all(
-    Array.from({ length: 50 }, () => client.createOrder({ promoCode: 'LIMIT3' })),
+  const attempts = await inBatches(
+    Array.from({ length: 50 }, () => () => client.createOrder({ promoCode: 'LIMIT3' })),
   );
   const successes = attempts.filter((item) => item.status === 201).length;
   const conflicts = attempts.filter((item) => item.status === 409).length;
