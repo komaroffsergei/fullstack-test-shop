@@ -4,14 +4,14 @@
 
 ## 1. Пирамида проверок
 
-| Уровень              | Инструмент                                | Что способен доказать                                                                | Что намеренно не подменяет                         |
-| -------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------- |
-| Static               | Prettier, ESLint typed, TypeScript strict | формат, опасные Promise, несовместимые типы во всех workspace и root scripts         | runtime и гонки                                    |
-| Unit                 | Vitest, Angular TestBed                   | деньги в копейках, state transitions, fingerprint, bootstrap UI                      | блокировки PostgreSQL                              |
-| Integration/race     | `tests/race/run.ts`                       | HTTP + worker + два providers + настоящие locks/UNIQUE/данные БД                     | внешний production network                         |
-| Browser E2E          | Playwright Chromium                       | пять интерактивов, dblclick, simulator, code, assets, CSS hover, responsive overflow | внутреннее число строк БД                          |
-| Production black-box | `tests/production/run.ts`                 | те же сценарии через Nginx/TLS/public origin, без прямого доступа к БД               | DB assertions (они остаются локальному race suite) |
-| Delivery             | Docker/CI/gitleaks                        | чистая сборка, runtime dependencies, secrets, immutable artifact                     | продуктовую логику без предыдущих уровней          |
+| Уровень              | Инструмент                                | Что способен доказать                                                                            | Что намеренно не подменяет                         |
+| -------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------- |
+| Static               | Prettier, ESLint typed, TypeScript strict | формат, опасные Promise, несовместимые типы во всех workspace и root scripts                     | runtime и гонки                                    |
+| Unit                 | Vitest, Angular TestBed                   | деньги в копейках, state transitions, fingerprint, bootstrap UI                                  | блокировки PostgreSQL                              |
+| Integration/race     | `tests/race/run.ts`                       | HTTP + worker + два providers + настоящие locks/UNIQUE/данные БД                                 | внешний production network                         |
+| Browser E2E          | Playwright Chromium                       | пять интерактивов, 12 товаров, фильтры, промокоды, dblclick, выдача, assets, responsive overflow | внутреннее число строк БД                          |
+| Production black-box | `tests/production/run.ts`                 | те же сценарии через Nginx/TLS/public origin, без прямого доступа к БД                           | DB assertions (они остаются локальному race suite) |
+| Delivery             | Docker/CI/gitleaks                        | чистая сборка, runtime dependencies, secrets, immutable artifact                                 | продуктовую логику без предыдущих уровней          |
 
 ## 2. Первый локальный запуск
 
@@ -126,7 +126,7 @@ PLAYWRIGHT_EXTERNAL_SERVER=1 WEB_URL=http://127.0.0.1:4200 pnpm test:e2e
 - catalog: open, клик внутри, outside close, повторная кнопка;
 - валюты ₸/₽ и active class;
 - вычисленный CSS transform при hover сервиса и товара;
-- ровно пять видимых карточек;
+- ровно 12 карточек из серверного каталога до применения фильтра;
 - настоящий double click «Купить»;
 - переход на UUID заказа, simulator paid и один code;
 - ровно один `delivered` в UI history;

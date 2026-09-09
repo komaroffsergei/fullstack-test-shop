@@ -15,7 +15,7 @@ test('five required interactions and purchase flow', async ({ page }) => {
   const browserErrors = trackBrowserErrors(page);
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  await expect(page.locator('.product-card')).toHaveCount(5);
+  await expect(page.locator('.product-card')).toHaveCount(12);
 
   // Публичная ссылка обязана вести к тому же учебнику/исходникам, которые опубликованы в GitHub.
   await expect(page.getByRole('link', { name: 'Документация' })).toHaveAttribute('href', '/docs/');
@@ -90,7 +90,7 @@ test('five required interactions and purchase flow', async ({ page }) => {
 test('all visible storefront images load successfully', async ({ page }) => {
   const browserErrors = trackBrowserErrors(page);
   await page.goto('/');
-  await expect(page.locator('.product-card')).toHaveCount(5);
+  await expect(page.locator('.product-card')).toHaveCount(12);
   const readImages = () =>
     page.locator('img').evaluateAll((elements) =>
       elements.map((element) => {
@@ -109,8 +109,58 @@ test('all visible storefront images load successfully', async ({ page }) => {
     )
     .toEqual([]);
   const images = await readImages();
-  expect(images.length).toBeGreaterThanOrEqual(15);
+  expect(images.length).toBeGreaterThanOrEqual(22);
   expect(images.every((image) => image.complete && image.width > 0)).toBe(true);
+  expect(browserErrors()).toEqual([]);
+});
+
+/** Сверяет полный набор материалов задания, рабочие фильтры и серверный расчёт промокода. */
+test('assignment catalog, filters and promocodes are available', async ({ page }) => {
+  const browserErrors = trackBrowserErrors(page);
+  await page.goto('/');
+
+  const expectedProducts = [
+    'Пополнение Steam 500 ₽',
+    'Пополнение Steam 1000 ₽',
+    'Пополнение Steam 2500 ₽',
+    'CS2 Prime Status ключ',
+    'GTA V ключ активации',
+    'Escape from Tarkov ключ',
+    'Discord Nitro 1 месяц',
+    'YouTube Premium 3 месяца',
+    'Spotify Premium 1 месяц',
+    'PlayStation Store карта 1000 ₽',
+    'Xbox Gift Card 1500 ₽',
+    'Roblox 800 Robux',
+  ];
+  await expect(page.locator('.product-card')).toHaveCount(expectedProducts.length);
+  for (const product of expectedProducts) {
+    await expect(page.getByRole('heading', { level: 3, name: product })).toBeVisible();
+  }
+
+  await page.getByRole('button', { name: 'Подписки', exact: true }).click();
+  await expect(page.locator('.product-card')).toHaveCount(3);
+  await expect(
+    page.getByRole('heading', { level: 3, name: 'Discord Nitro 1 месяц' }),
+  ).toBeVisible();
+
+  await page.getByRole('button', { name: 'Все товары', exact: true }).click();
+  await page.getByPlaceholder('Игра, приложение или SKU…').fill('Xbox');
+  await expect(page.locator('.product-card')).toHaveCount(1);
+  await expect(
+    page.getByRole('heading', { level: 3, name: 'Xbox Gift Card 1500 ₽' }),
+  ).toBeVisible();
+
+  await page.getByRole('button', { name: /Ввести промокод/ }).click();
+  await page.getByRole('button', { name: /WELCOME10/ }).click();
+  await expect(page.locator('.promo-quote')).toContainText('Цена 500 ₽');
+  await expect(page.locator('.promo-quote')).toContainText('Скидка −50 ₽');
+  await expect(page.locator('.promo-quote')).toContainText('К оплате 450 ₽');
+
+  await expect(page.getByText('Исходный пул ключей')).toBeVisible();
+  await expect(page.locator('.key-list code')).toHaveCount(50);
+  await expect(page.getByText('Промокоды и лимиты')).toBeVisible();
+  await expect(page.getByText('Статусы и переходы заказа')).toBeVisible();
   expect(browserErrors()).toEqual([]);
 });
 

@@ -12,33 +12,42 @@
     </button>
     @if (menuOpen()) {
       <nav class="catalog-menu" aria-label="Каталог" (click)="keepMenuOpen($event)">
-        <a href="#products">Игровые ключи</a><a href="#services">Пополнения</a
-        ><a href="#products">Подписки</a>
-        <a href="#products">Подарочные карты</a>
+        <button type="button" (click)="setProductFilter('key'); menuOpen.set(false)">
+          Игровые ключи <span>3</span>
+        </button>
+        <button type="button" (click)="setProductFilter('topup'); menuOpen.set(false)">
+          Пополнения <span>3</span>
+        </button>
+        <button type="button" (click)="setProductFilter('subscription'); menuOpen.set(false)">
+          Подписки <span>3</span>
+        </button>
+        <button type="button" (click)="setProductFilter('giftcard'); menuOpen.set(false)">
+          Подарочные карты <span>3</span>
+        </button>
       </nav>
     }
   </div>
-  <label class="search"
-    ><span class="sr-only">Поиск</span><input placeholder="Игра, приложение или услуга…" /><span
-      aria-hidden="true"
-      >⌕</span
-    ></label
-  >
+  <label class="search">
+    <span class="sr-only">Поиск по названию или SKU</span>
+    <input placeholder="Игра, приложение или SKU…" [value]="search()" (input)="setSearch($event)" />
+    <span aria-hidden="true">⌕</span>
+  </label>
   <a class="account" routerLink="/admin" aria-label="Открыть админку">♟</a>
 </header>
 
 <main class="shell">
   @if (demo()) {
-    <section style="padding: 16px 0">
+    <section class="demo-strip">
+      <div>
+        <strong>Демонстрационный контур</strong>
+        <p>Оплата, вебхуки, очередь и выдача выполняются внутри тестового стенда.</p>
+      </div>
       <button type="button" (click)="buy('STEAM-TOPUP-500', true)" [disabled]="!!buying()">
-        Попробовать сбой и восстановление заказа
+        Проверить сбой и восстановление
       </button>
-      <p>
-        Первая выдача этого заказа завершится управляемой ошибкой; повтор выполнит обычную цепочку
-        поставщиков.
-      </p>
     </section>
   }
+
   <!-- Интерактив №1–2: автоматическая/ручная карусель и выбор конкретного баннера. -->
   <section class="hero" aria-roledescription="carousel" aria-label="Предложения">
     <button
@@ -78,8 +87,8 @@
   <section class="services" id="services" aria-label="Сервисы">
     @for (service of services; track service[0]) {
       <button type="button" class="service-item">
-        <span class="service-icon"><img [src]="service[1]" [alt]="service[0]" /></span
-        ><strong>{{ service[0] }}</strong>
+        <span class="service-icon"><img [src]="service[1]" [alt]="service[0]" /></span>
+        <strong>{{ service[0] }}</strong>
       </button>
     }
     <button type="button" class="service-item more">
@@ -90,15 +99,26 @@
   <!-- Интерактив №4: выбор валюты; покупка всё равно использует серверную цену SKU. -->
   <section class="steam-panel" aria-label="Пополнение Steam">
     <div class="steam-title">
-      <img src="/assets/steam.png" alt="" /><span
-        ><strong>Пополнение Steam</strong><small>Ввести промокод⌄</small></span
-      ><b>5%</b>
+      <img src="/assets/steam.png" alt="" />
+      <span>
+        <strong>Пополнение Steam</strong>
+        <button
+          class="promo-toggle"
+          type="button"
+          (click)="togglePromo()"
+          [attr.aria-expanded]="promoOpen()"
+        >
+          Ввести промокод {{ promoOpen() ? '⌃' : '⌄' }}
+        </button>
+      </span>
+      <b>5%</b>
     </div>
-    <label
-      ><span>♟</span><input aria-label="Логин Steam" placeholder="Логин Steam" /><i>i</i></label
-    >
-    <label
-      ><span>◉</span><input aria-label="Сумма" value="500₽" /><span class="currencies">
+    <label>
+      <span>♟</span><input aria-label="Логин Steam" placeholder="Логин Steam" /><i>i</i>
+    </label>
+    <label>
+      <span>◉</span><input aria-label="Сумма" value="500₽" />
+      <span class="currencies">
         @for (item of ['$', '₸', '₽']; track item) {
           <button
             type="button"
@@ -108,8 +128,8 @@
             {{ item }}
           </button>
         }
-      </span></label
-    >
+      </span>
+    </label>
     <button
       class="pay-button"
       type="button"
@@ -118,47 +138,198 @@
     >
       {{ buying() ? 'Создаём заказ…' : 'Оплатить 500₽' }}
     </button>
+
+    @if (promoOpen()) {
+      <div class="promo-panel">
+        <div class="promo-field">
+          <label for="promo-code">Промокод из тестового задания</label>
+          <div>
+            <input
+              id="promo-code"
+              placeholder="WELCOME10"
+              [value]="promoCode()"
+              (input)="setPromoCode($event)"
+              (keyup.enter)="quotePromo()"
+            />
+            <button type="button" (click)="quotePromo()" [disabled]="quotePending()">
+              {{ quotePending() ? 'Считаем…' : 'Проверить' }}
+            </button>
+          </div>
+        </div>
+        <div class="promo-quick" aria-label="Доступные промокоды">
+          @for (promo of promoExamples; track promo.code) {
+            <button type="button" (click)="usePromo(promo.code)">
+              <strong>{{ promo.code }}</strong
+              ><span>{{ promo.value }} · {{ promo.limit }}</span>
+            </button>
+          }
+        </div>
+        @if (promoQuote(); as quote) {
+          <div class="promo-quote" role="status">
+            <span
+              >Цена <b>{{ quote.basePriceMinor / 100 }} ₽</b></span
+            >
+            <span
+              >Скидка <b>−{{ quote.discountMinor / 100 }} ₽</b></span
+            >
+            <span
+              >К оплате <strong>{{ quote.finalPriceMinor / 100 }} ₽</strong></span
+            >
+          </div>
+        }
+        @if (promoMessage()) {
+          <p class="promo-message" [class.invalid]="!promoQuote()">{{ promoMessage() }}</p>
+        }
+      </div>
+    }
   </section>
 
-  <!-- Интерактив №5: карточки каталога и идемпотентная кнопка покупки. -->
+  <!-- Интерактив №5: полный серверный каталог и идемпотентная кнопка покупки. -->
   <section class="products" id="products">
     <div class="section-heading">
-      <h2>Популярные товары</h2>
-      <div class="chips">
-        <button class="active">▦ Донат</button><button>Подписки</button><button>Ключи</button
-        ><button>Игровая валюта</button>
+      <div>
+        <p class="eyebrow">Данные из приложения к заданию</p>
+        <h2>Каталог — 12 товаров</h2>
+      </div>
+      <div class="chips" aria-label="Фильтр товаров">
+        @for (filter of filters; track filter.value) {
+          <button
+            type="button"
+            [class.active]="productFilter() === filter.value"
+            [attr.aria-pressed]="productFilter() === filter.value"
+            (click)="setProductFilter(filter.value)"
+          >
+            {{ filter.label }}
+          </button>
+        }
       </div>
     </div>
+    <p class="catalog-result">
+      Показано {{ visibleProducts().length }} из {{ products().length }} · цены приходят из API в
+      RUB
+    </p>
     @if (error()) {
       <p class="error" role="alert">{{ error() }}</p>
     }
     @if (loading()) {
       <div class="loading">Загружаем каталог…</div>
     } @else {
-      <div class="product-grid">
-        <!-- track по SKU сохраняет DOM-узлы стабильными при обновлении signals. -->
-        @for (product of visibleProducts(); track product.sku) {
-          <article class="product-card">
-            <img [src]="productImage()" [alt]="product.name" />
-            <div class="product-body">
-              <small>🔥 {{ product.type }} · мгновенно</small>
-              <h3>{{ product.name }}</h3>
-              <div class="price">
-                <strong>{{ product.price }} ₽</strong><s>{{ product.price + 1000 }} ₽</s>
+      @if (visibleProducts().length) {
+        <div class="product-grid">
+          <!-- track по SKU сохраняет DOM-узлы стабильными при обновлении signals. -->
+          @for (product of visibleProducts(); track product.sku) {
+            <article class="product-card">
+              <img [src]="productImage(product)" [alt]="product.name" />
+              <div class="product-body">
+                <small>{{ productType(product.type) }} · {{ product.sku }}</small>
+                <h3>{{ product.name }}</h3>
+                <div class="price">
+                  <strong>{{ product.price }} ₽</strong><span>{{ product.currency }}</span>
+                </div>
+                <button type="button" (click)="buy(product.sku)" [disabled]="!!buying()">
+                  {{ buying() === product.sku ? 'Подождите…' : 'Купить' }}
+                </button>
               </div>
-              <button type="button" (click)="buy(product.sku)" [disabled]="!!buying()">
-                {{ buying() === product.sku ? 'Подождите…' : 'Купить' }}
-              </button>
-            </div>
-          </article>
-        }
-      </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="empty-products">По этому запросу товаров нет. Сбросьте фильтр или поиск.</div>
+      }
     }
+  </section>
+
+  <section class="assignment-data" aria-labelledby="assignment-title">
+    <div class="assignment-heading">
+      <div>
+        <p class="eyebrow">Материалы, на которых работает стенд</p>
+        <h2 id="assignment-title">Исходные данные тестового задания</h2>
+      </div>
+      <p>
+        Это тестовые записи. Они лежат в seed и используются воспроизводимыми проверками. После
+        публичных покупок рабочий остаток ключей меняется, а защищённый reset возвращает исходный
+        набор.
+      </p>
+    </div>
+
+    <div class="assignment-stats" aria-label="Состав тестовых данных">
+      <article><strong>12</strong><span>товаров в каталоге</span></article>
+      <article><strong>50</strong><span>ключей для выдачи</span></article>
+      <article><strong>4</strong><span>промокода с лимитами</span></article>
+      <article><strong>2</strong><span>поставщика A / B</span></article>
+      <article><strong>7</strong><span>статусов заказа</span></article>
+    </div>
+
+    <div class="assignment-grid">
+      <details open>
+        <summary>Промокоды и лимиты <span>4 записи</span></summary>
+        <div class="promo-reference">
+          @for (promo of promoExamples; track promo.code) {
+            <article>
+              <strong>{{ promo.code }}</strong
+              ><b>{{ promo.value }}</b
+              ><span>{{ promo.limit }}</span>
+            </article>
+          }
+        </div>
+        <p>
+          Скидку считает backend. Клиент передаёт только SKU и код; лимит фиксируется транзакцией
+          даже при параллельных запросах.
+        </p>
+      </details>
+
+      <details open>
+        <summary>Статусы и переходы заказа <span>7 состояний</span></summary>
+        <ol class="status-list">
+          @for (status of orderStatuses; track status[0]) {
+            <li>
+              <code>{{ status[0] }}</code
+              ><span>{{ status[1] }}</span>
+            </li>
+          }
+        </ol>
+        <p><b>Основной путь:</b> created → paid → delivering → delivered.</p>
+      </details>
+
+      <details>
+        <summary>Контракт платёжного вебхука <span>POST /api/v1/webhooks/payment</span></summary>
+        <p>
+          Доставка at-least-once: один event_id может прийти повторно, а события — в другом порядке.
+          Повтор должен стать успешным no-op.
+        </p>
+        <pre><code>{{ webhookExample }}</code></pre>
+      </details>
+
+      <details>
+        <summary>Контракт двух поставщиков <span>POST /issue</span></summary>
+        <p>
+          A — основной, B — fallback. Оба умеют отвечать с задержкой, 5xx и таймаутом. Повтор одного
+          request_id возвращает тот же код: таймаут не считается доказанным отказом.
+        </p>
+        <pre><code>{{ providerExample }}</code></pre>
+      </details>
+
+      <details class="keys-details">
+        <summary>Исходный пул ключей <span>50 записей</span></summary>
+        <p>
+          Ключи по очереди распределяются между поставщиками A и B. Уникальное ограничение в базе не
+          позволяет одному коду попасть в два заказа.
+        </p>
+        <div class="key-list">
+          @for (key of assignmentKeys; track key; let index = $index) {
+            <code
+              ><span>{{ index + 1 }}</span
+              >{{ key }}</code
+            >
+          }
+        </div>
+      </details>
+    </div>
   </section>
 </main>
 
 <footer class="shell mini-footer">
-  <span>Демо для тестового задания</span>
+  <span>Рабочий стенд тестового задания</span>
   <nav aria-label="Документация и управление">
     <a href="/docs/">Документация</a>
     <a href="/docs/offline/">Исходный код офлайн</a>

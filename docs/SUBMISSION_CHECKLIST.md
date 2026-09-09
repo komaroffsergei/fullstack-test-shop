@@ -124,7 +124,7 @@ git archive --format=zip --output=release/fullstack-test-shop-v1.1.1.zip HEAD
 - hero чёрный, rounded, arrows/dots доступны;
 - service strip использует исходные assets;
 - Steam panel состоит из title/login/amount/currency/pay;
-- пять cards одинаковой высоты, hover не вызывает layout shift;
+- все 12 cards одинаковой высоты, hover не вызывает layout shift;
 - catalog не выходит за viewport на 390 px;
 - кнопки имеют focus state и понятные accessible names;
 - order status показывает цену, историю и ровно один code;
